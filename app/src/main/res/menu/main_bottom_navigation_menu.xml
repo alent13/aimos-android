@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_dialogs"
+        android:icon="@drawable/ic_dialogs"
+        android:title="Диалоги" />
+    <item
+        android:id="@+id/action_contacts"
+        android:icon="@drawable/ic_contacts"
+        android:title="Контакты"/>
+    <item
+        android:id="@+id/action_notifications"
+        android:icon="@drawable/ic_bell"
+        android:title="Уведомления"/>
+    <item
+        android:id="@+id/action_storage"
+        android:icon="@drawable/ic_storage"
+        android:title="Хранилище" />
+</menu>

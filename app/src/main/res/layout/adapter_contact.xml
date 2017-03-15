@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="horizontal"
+              android:layout_width="match_parent"
+              android:layout_height="96dp"
+              android:padding="8dp">
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/profile_photo"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_margin="5dp"
+        android:background="@drawable/bg_logo"
+        android:src="@drawable/default_user_male"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        android:layout_marginLeft="8dp">
+        <TextView
+            android:id="@+id/contact_adapter_name_surname"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Name Surname"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="24dp"/>
+        <TextView
+            android:id="@+id/contact_adapter_login"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="\@login"
+            android:fontFamily="sans-serif-light"
+            android:textSize="20dp"/>
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/contact_adapter_send_message"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_message"
+        android:tint="#444444"
+        android:layout_marginLeft="-40dp"/>
+</LinearLayout>

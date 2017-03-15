@@ -1,0 +1,114 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:tools="http://schemas.android.com/tools"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+             tools:context="com.applexis.aimos_android.fragment.DialogsFragment">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/dialog_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorPrimaryDark">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp">
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="8dp"
+                android:src="@drawable/ic_search"/>
+
+            <EditText
+                android:id="@+id/dialog_search"
+                android:fontFamily="sans-serif"
+                android:textSize="20sp"
+                android:gravity="center_vertical"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_ui_rounded"
+                android:hint="Поиск..."
+                android:paddingLeft="42dp"
+                android:paddingRight="42dp"
+                android:layout_marginRight="48dp"
+                android:textColor="@color/white"/>
+
+            <ImageView
+                android:id="@+id/dialog_delete_search_text"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_centerVertical="true"
+                android:layout_alignParentRight="true"
+                android:layout_marginRight="56dp"
+                android:tint="@color/white"
+                android:src="@drawable/ic_cross"/>
+
+            <ImageView
+                android:id="@+id/dialog_update_list"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="4dp"
+                android:background="@drawable/bg_ui_rounded"
+                android:layout_centerVertical="true"
+                android:layout_alignParentRight="true"
+                android:tint="@color/white"
+                android:src="@drawable/ic_refresh"/>
+        </RelativeLayout>
+    </android.support.v7.widget.Toolbar>
+    <RelativeLayout
+        android:id="@+id/dialogs_load_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/dialog_toolbar">
+
+        <LinearLayout
+            android:id="@+id/dialogs_loading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-light"
+                android:padding="5dp"
+                android:text="Загрузка списка диалогов..."
+                android:textSize="18sp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/dialogs_load_error_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-light"
+                android:padding="5dp"
+                android:text="Ошибка загрузки диалогов"
+                android:textSize="18sp"/>
+
+            <Button
+                android:id="@+id/dialogs_update"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-light"
+                android:text="Обновить"
+                android:textSize="20dp"/>
+        </LinearLayout>
+    </RelativeLayout>
+    <ListView
+        android:id="@+id/dialogs_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/dialog_toolbar"/>
+</RelativeLayout>

@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Aimos</string>
+    <string name="font_nautiluspompilius">fonts/nautiluspompilius.ttf</string>
+    <string name="title_activity_registration">RegistrationActivity</string>
+    <string name="title_activity_dialogs">DialogsActivity</string>
+    <string name="title_activity_main">MainActivity</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="key_update_success">Ключи успешно обновлены</string>
+    <string name="key_update_failure">Ошибка обновления ключей, пожалуйста, повторите попытку</string>
+    <string name="update_keys_text"><u>Обновить ключи</u></string>
+    <string name="message_press_to_show_text">Нажмите на сообщение, чтобы прочитать</string>
+</resources>
