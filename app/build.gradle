@@ -3,7 +3,7 @@ apply plugin: 'android-apt'
 
 android {
     compileSdkVersion 25
-    buildToolsVersion "24.0.1"
+    buildToolsVersion '25.0.0'
     defaultConfig {
         multiDexEnabled true
         applicationId "com.applexis.aimos_android"
@@ -46,5 +46,4 @@ dependencies {
     compile 'devlight.io:navigationtabbar:1.2.5'
     compile 'de.hdodenhof:circleimageview:2.1.0'
     compile 'com.google.android.gms:play-services-appindexing:8.4.0'
-    compile 'com.android.support.constraint:constraint-layout:1.0.0-beta4'
 }
