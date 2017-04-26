@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/adapter_file_height">
+
+    <ImageView
+        android:id="@+id/adapter_storage_item_logo"
+        android:layout_width="@dimen/adapter_file_height"
+        android:layout_height="@dimen/adapter_file_height"
+        android:src="@drawable/ic_file"
+        android:padding="8dp"/>
+
+    <ImageView
+        android:id="@+id/adapter_storage_item_public"
+        android:layout_width="@dimen/adapter_file_info"
+        android:layout_height="@dimen/adapter_file_info"
+        android:layout_alignLeft="@id/adapter_storage_item_logo"
+        android:layout_alignBottom="@+id/adapter_storage_item_logo"
+        android:src="@drawable/ic_public"
+        android:layout_marginBottom="14dp"
+        android:layout_marginLeft="20dp"
+        android:visibility="visible"/>
+
+    <ImageView
+        android:id="@+id/adapter_storage_item_status"
+        android:layout_width="@dimen/adapter_file_info"
+        android:layout_height="@dimen/adapter_file_info"
+        android:src="@drawable/ic_status_sync"
+        android:layout_toRightOf="@id/adapter_storage_item_public"
+        android:layout_alignBottom="@+id/adapter_storage_item_logo"
+        android:tint="@color/status_sync"
+        android:layout_marginLeft="-4dp"/>
+
+    <TextView
+        android:id="@+id/adapter_storage_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@+id/adapter_storage_item_logo"
+        android:text="Name"
+        android:textSize="22dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="12dp"
+        android:fontFamily="sans-serif-medium"/>
+
+    <TextView
+        android:id="@+id/adapter_storage_info_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@+id/adapter_storage_item_logo"
+        android:layout_alignParentBottom="true"
+        android:text="31 Mar 17 10:48:59 34.06 MB"
+        android:textSize="18dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginBottom="16dp"
+        android:fontFamily="sans-serif-light"/>
+
+</RelativeLayout>

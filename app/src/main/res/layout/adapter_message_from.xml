@@ -6,7 +6,7 @@
               android:paddingBottom="10dp">
 
     <de.hdodenhof.circleimageview.CircleImageView
-        android:id="@+id/profile_photo"
+        android:id="@+id/adapter_message_profile_photo"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:layout_margin="5dp"
@@ -14,6 +14,7 @@
         android:src="@drawable/default_user_male"/>
 
     <LinearLayout
+        android:id="@+id/adapter_message_content_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -22,26 +23,29 @@
         android:layout_marginBottom="5dp"
         android:layout_marginRight="20dp"
         android:padding="5dp"
-        android:layout_toRightOf="@+id/profile_photo"
+        android:layout_toRightOf="@+id/adapter_message_profile_photo"
         android:background="@drawable/bg_message">
+
         <TextView
-            android:id="@+id/datetime"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="sans-serif"
-            android:paddingBottom="5dp"
-            android:text="12:37 21 дек 2016"
-            android:textStyle="italic"
-            android:textColor="@color/black"
-            android:textSize="14sp"/>
-        <TextView
-            android:id="@+id/message"
+            android:id="@+id/adapter_message_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="sans-serif"
             android:textColor="@color/black"
             android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed viverra sit amet turpis feugiat interdum. Mauris imperdiet nunc eget sapien."
             android:textSize="18sp"/>
+
+        <TextView
+            android:id="@+id/adapter_message_datetime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif"
+            android:paddingBottom="5dp"
+            android:text="12:37 21 дек 2016"
+            android:textStyle="italic"
+            android:gravity="end|right"
+            android:textColor="@color/black"
+            android:textSize="14sp"/>
     </LinearLayout>
 
 </RelativeLayout>

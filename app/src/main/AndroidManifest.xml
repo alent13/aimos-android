@@ -11,29 +11,26 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".activity.AuthenticationActivity"
+            android:name=".ui.activity.AuthenticationActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.AppCompat.NoActionBar">
+            android:theme="@style/AppTheme.NoActionBar.Auth">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
-
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
         <activity
-            android:name=".activity.RegistrationActivity"
-            android:label="@string/title_activity_registration"
-            android:theme="@style/Theme.AppCompat.NoActionBar">
+            android:name=".ui.activity.RegistrationActivity"
+            android:theme="@style/AppTheme.NoActionBar">
         </activity>
         <activity
-            android:name=".activity.MainActivity"
-            android:label="@string/title_activity_main"
+            android:name=".ui.activity.MainActivity"
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="adjustResize|stateHidden">
         </activity>
 
-        <activity android:name=".activity.DialogActivity"
-                  android:theme="@style/Theme.AppCompat.NoActionBar">
+        <activity android:name=".ui.activity.DialogActivity"
+                  android:theme="@style/AppTheme.NoActionBar">
         </activity>
     </application>
 

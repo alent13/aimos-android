@@ -7,7 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_main_gradient"
-    tools:context="com.applexis.aimos_android.activity.AuthenticationActivity">
+    tools:context=".ui.activity.AuthenticationActivity">
 
     <TextView
         android:layout_width="wrap_content"
@@ -64,6 +64,7 @@
                 android:background="@drawable/bg_ui_rounded"
                 android:hint="Логин"
                 android:maxLines="1"
+                android:imeOptions="actionNext"
                 android:fontFamily="sans-serif-light"
                 android:textSize="24dp"
                 android:id="@+id/registration_login"

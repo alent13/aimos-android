@@ -4,4 +4,6 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="auth_logo_height">120dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
+    <dimen name="adapter_file_height">80dp</dimen>
+    <dimen name="adapter_file_info">32dp</dimen>
 </resources>

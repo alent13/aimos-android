@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:background="#423752"
     android:orientation="vertical">
 
     <android.support.v4.view.ViewPager
@@ -13,24 +11,24 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@color/white"/>
+        android:background="@color/white" />
 
     <devlight.io.library.ntb.NavigationTabBar
         android:id="@+id/ntb_horizontal"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:background="@color/white"
+        app:ntb_badge_bg_color="@color/light_gray"
         app:ntb_badge_gravity="top"
         app:ntb_badge_position="left"
-        app:ntb_badged="true"
-        app:ntb_scaled="true"
-        app:ntb_tinted="true"
-        app:ntb_title_mode="all"
-        app:ntb_titled="true"
-        app:ntb_swiped="true"
-        app:ntb_badge_bg_color="@color/light_gray"
         app:ntb_badge_title_color="@color/white"
+        app:ntb_badged="true"
+        app:ntb_bg_color="@color/colorPrimary"
         app:ntb_inactive_color="@color/white"
-        app:ntb_bg_color="@color/colorPrimaryDark"/>
+        app:ntb_scaled="true"
+        app:ntb_swiped="true"
+        app:ntb_tinted="true"
+        app:ntb_titled="true"
+        app:ntb_title_mode="active"/>
 
 </LinearLayout>

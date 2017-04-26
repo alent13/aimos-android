@@ -1,0 +1,27 @@
+<resources>
+
+    <string name="key_update_success">Ключи успешно обновлены</string>
+    <string name="key_update_failure">Ошибка обновления ключей, пожалуйста, повторите попытку</string>
+    <string name="update_keys_text"><u>Обновить ключи</u></string>
+    <string name="message_press_to_show_text">Нажмите на сообщение, чтобы прочитать</string>
+
+    <string name="april">Апрель</string>
+    <string name="august">Август</string>
+    <string name="december">Декабрь</string>
+    <string name="february">Февраль</string>
+    <string name="january">Январь</string>
+    <string name="july">Июль</string>
+    <string name="june">Июнь</string>
+    <string name="march">Март</string>
+    <string name="may">Май</string>
+    <string name="november">Ноябрь</string>
+    <string name="october">Октябрь</string>
+    <string name="september">Сентябрь</string>
+
+    <string name="home">Я</string>
+    <string name="contacts">Контакты</string>
+    <string name="dialogs">Диалоги</string>
+    <string name="notifications">Уведомления</string>
+    <string name="storage">Хранилище</string>
+
+</resources>

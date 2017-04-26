@@ -5,13 +5,13 @@
     android:id="@+id/activity_dialog"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.applexis.aimos_android.activity.DialogActivity">
+    tools:context=".ui.activity.DialogActivity">
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/message_toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/colorPrimaryDark">
+        android:background="@color/colorPrimary">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -55,21 +55,22 @@
         </RelativeLayout>
     </android.support.v7.widget.Toolbar>
 
-    <ListView
+    <android.support.v7.widget.RecyclerView
         android:id="@+id/message_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/message_type_layout"
         android:layout_below="@+id/message_toolbar"
         android:background="@drawable/bg_repeate_image"
-        android:stackFromBottom="true"/>
+        android:stackFromBottom="true"
+        tools:listitem="@layout/adapter_message_from"/>
 
     <LinearLayout
         android:id="@+id/message_type_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="@color/colorPrimaryDark"
+        android:background="@color/colorPrimary"
         android:orientation="horizontal"
         android:padding="8dp">
 

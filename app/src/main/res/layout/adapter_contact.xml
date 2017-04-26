@@ -6,7 +6,7 @@
               android:padding="8dp">
 
     <de.hdodenhof.circleimageview.CircleImageView
-        android:id="@+id/profile_photo"
+        android:id="@+id/adapter_message_profile_photo"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:layout_margin="5dp"
