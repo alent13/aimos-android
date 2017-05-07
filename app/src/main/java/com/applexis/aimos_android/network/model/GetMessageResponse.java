@@ -1,12 +1,10 @@
 package com.applexis.aimos_android.network.model;
 
-import org.apache.commons.codec.binary.Base64;
+import com.applexis.utils.crypto.AESCrypto;
 
-import java.security.KeyPair;
-import java.util.ArrayList;
 import java.util.List;
 
-public class GetMessageResponse {
+public class GetMessageResponse extends ResponseBase {
 
     public enum ErrorType {
         BAD_PUBLIC_KEY,
@@ -17,11 +15,20 @@ public class GetMessageResponse {
 
     private List<MessageMinimal> messageMinimals;
 
-    public boolean success;
-
-    public String errorType;
-
     public GetMessageResponse() {
+    }
+
+    public GetMessageResponse(String success, String errorType, List<MessageMinimal> messageMinimals) {
+        super(success, errorType);
+        this.messageMinimals = messageMinimals;
+    }
+
+    public GetMessageResponse(AESCrypto aes) {
+        super(aes);
+    }
+
+    public GetMessageResponse(String errorType, AESCrypto aes) {
+        super(errorType, aes);
     }
 
     public List<MessageMinimal> getMessageMinimals() {
@@ -31,27 +38,4 @@ public class GetMessageResponse {
     public void setMessageMinimals(List<MessageMinimal> messageMinimals) {
         this.messageMinimals = messageMinimals;
     }
-
-    public GetMessageResponse(List<MessageMinimal> messageMinimals, boolean success, String errorType) {
-        this.messageMinimals = messageMinimals;
-        this.success = success;
-        this.errorType = errorType;
-    }
-
-    public boolean isSuccess() {
-        return success;
-    }
-
-    public void setSuccess(boolean success) {
-        this.success = success;
-    }
-
-    public String getErrorType() {
-        return errorType;
-    }
-
-    public void setErrorType(String errorType) {
-        this.errorType = errorType;
-    }
-
 }

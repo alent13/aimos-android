@@ -16,8 +16,9 @@ import retrofit2.Response;
  * @author applexis
  */
 
-public class KeyExchange {
+public class KeyExchangeAPI {
 
+    public static final int AES_KEY_LENGTH = 32;
     private KeyExchangeListener listener;
 
     public void setKeyExchangeListener(KeyExchangeListener listener) {
@@ -36,10 +37,10 @@ public class KeyExchange {
                     byte[] keyResponse = null;
                     keyResponse = RSACrypto.decrypt(RSAKey.getPrivate(), Base64.decode(response.body(), Base64.DEFAULT));
 
-                    byte[] keyBytes = new byte[8];
-                    System.arraycopy(keyResponse, keyResponse.length - 8, keyBytes, 0, 8);
-                    String desKey = new AESCrypto(keyBytes).getKeyString();
-                    SharedPreferencesHelper.setGlobalAesKey(desKey);
+                    byte[] keyBytes = new byte[AES_KEY_LENGTH];
+                    System.arraycopy(keyResponse, keyResponse.length - AES_KEY_LENGTH, keyBytes, 0, AES_KEY_LENGTH);
+                    String aesKey = new AESCrypto(keyBytes).getKeyString();
+                    SharedPreferencesHelper.setGlobalAesKey(aesKey);
                     SharedPreferencesHelper.setGlobalPublicKey(RSACrypto.getPublicKeyString(RSAKey.getPublic()));
                     SharedPreferencesHelper.setGlobalPrivateKey(RSACrypto.getPrivateKeyString(RSAKey.getPrivate()));
                     if(listener != null) {

@@ -1,9 +1,8 @@
 package com.applexis.aimos_android.network.model;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.applexis.utils.crypto.AESCrypto;
 
-public class DialogResponse extends DialogMinimal {
+public class DialogResponse extends ResponseBase {
 
     public enum ErrorType {
         SUCCESS,
@@ -13,66 +12,29 @@ public class DialogResponse extends DialogMinimal {
         INCORRECT_TOKEN
     }
 
-    private boolean success;
-
-    private String errorType;
+    DialogMinimal dialog;
 
     public DialogResponse() {
-        this.success = false;
     }
 
-    public DialogResponse(String errorType) {
-        if (errorType == ErrorType.SUCCESS.name()) {
-            this.success = true;
-        } else {
-            this.success = false;
-        }
-        this.errorType = errorType;
+    public DialogResponse(String success, String errorType, DialogMinimal dialog) {
+        super(success, errorType);
+        this.dialog = dialog;
     }
 
-    public DialogResponse(Long id, String name, List<UserMinimalInfo> users) {
-        this.id = id;
-        this.name = name;
-        this.users = users;
+    public DialogResponse(AESCrypto aes) {
+        super(aes);
     }
 
-    public Long getId() {
-        return id;
+    public DialogResponse(String errorType, AESCrypto aes) {
+        super(errorType, aes);
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public DialogMinimal getDialog() {
+        return dialog;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public List<UserMinimalInfo> getUsers() {
-        return users;
-    }
-
-    public void setUsers(List<UserMinimalInfo> users) {
-        this.users = users;
-    }
-
-    public boolean isSuccess() {
-        return success;
-    }
-
-    public void setSuccess(boolean success) {
-        this.success = success;
-    }
-
-    public String getErrorType() {
-        return errorType;
-    }
-
-    public void setErrorType(String errorType) {
-        this.errorType = errorType;
+    public void setDialog(DialogMinimal dialog) {
+        this.dialog = dialog;
     }
 }

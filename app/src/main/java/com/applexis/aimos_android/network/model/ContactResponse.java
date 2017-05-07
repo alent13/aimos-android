@@ -1,8 +1,10 @@
 package com.applexis.aimos_android.network.model;
 
+import com.applexis.utils.crypto.AESCrypto;
+
 import java.util.List;
 
-public class ContactResponse {
+public class ContactResponse extends ResponseBase {
 
     public enum ErrorType {
         SUCCESS,
@@ -12,46 +14,29 @@ public class ContactResponse {
         INCORRECT_TOKEN
     }
 
-    private boolean success;
-
-    private String errorType;
-
     private List<UserMinimalInfo> userList;
 
     public ContactResponse() {
-        this.success = false;
     }
 
-    public ContactResponse(String errorType) {
-        if (errorType == ErrorType.SUCCESS.name()) {
-            this.success = true;
-        } else {
-            this.success = false;
-        }
-        this.errorType = errorType;
+    public ContactResponse(String success, String errorType, List<UserMinimalInfo> userList) {
+        super(success, errorType);
+        this.userList = userList;
     }
 
-    public ContactResponse(List<UserMinimalInfo> userList) {
+    public ContactResponse(AESCrypto aes) {
+        super(aes);
+    }
+
+    public ContactResponse(String errorType, AESCrypto aes) {
+        super(errorType, aes);
+    }
+
+    public ContactResponse(List<UserMinimalInfo> userList, AESCrypto aes) {
         if (userList != null) {
             this.userList = userList;
         }
-        this.success = true;
-    }
-
-    public boolean isSuccess() {
-        return success;
-    }
-
-    public void setSuccess(boolean success) {
-        this.success = success;
-    }
-
-    public String getErrorType() {
-        return errorType;
-    }
-
-    public void setErrorType(String errorType) {
-        this.errorType = errorType;
+        this.success = aes.encrypt("true");
     }
 
     public List<UserMinimalInfo> getUserList() {

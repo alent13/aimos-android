@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
@@ -14,8 +14,40 @@
         app:popupTheme="@style/Theme.AppCompat.Light.NoActionBar"/>
 
     <android.support.v7.widget.RecyclerView
+        android:id="@+id/fragment_storage_recycler"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_below="@+id/fragment_storage_toolbar"
+        android:layout_above="@+id/fragment_storage_sync_layout"
         tools:listitem="@layout/adapter_folder_item"/>
 
-</LinearLayout>
+    <RelativeLayout
+        android:id="@+id/fragment_storage_sync_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@color/colorPrimary"
+        android:visibility="visible">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:layout_centerVertical="true"
+            android:textColor="@color/white"
+            android:layout_marginLeft="16dp"
+            android:layout_alignParentLeft="true"
+            android:text="@string/synchronizationText"/>
+
+        <com.wang.avi.AVLoadingIndicatorView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            app:indicatorName="LineScaleIndicator"
+            android:layout_marginRight="16dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"/>
+    </RelativeLayout>
+
+</RelativeLayout>

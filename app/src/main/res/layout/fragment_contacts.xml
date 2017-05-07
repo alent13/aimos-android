@@ -32,7 +32,7 @@
                 android:background="@drawable/bg_ui_rounded"
                 android:fontFamily="sans-serif"
                 android:gravity="center_vertical"
-                android:hint="Поиск..."
+                android:hint="@string/toolbarSearchText"
                 android:paddingLeft="42dp"
                 android:paddingRight="42dp"
                 android:textColor="@color/white"
@@ -79,7 +79,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-light"
                 android:padding="5dp"
-                android:text="Загрузка списка контактов..."
+                android:text="@string/contactLoadText"
                 android:textSize="18sp" />
         </LinearLayout>
 
@@ -97,7 +97,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-light"
                 android:padding="5dp"
-                android:text="Ошибка загрузки контактов"
+                android:text="@string/contactLoadErrorText"
                 android:textSize="18sp" />
 
             <Button
@@ -132,10 +132,11 @@
                 android:textColor="@color/white"
                 android:textSize="18sp" />
 
-            <ListView
+            <android.support.v7.widget.RecyclerView
                 android:id="@+id/contacts_list"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                tools:listitem="@layout/adapter_contact"/>
 
             <TextView
                 android:id="@+id/contact_search_text"
@@ -150,11 +151,12 @@
                 android:textSize="18sp"
                 android:visibility="gone" />
 
-            <ListView
+            <android.support.v7.widget.RecyclerView
                 android:id="@+id/contacts_list_searched"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:visibility="gone" />
+                android:visibility="gone"
+                tools:listitem="@layout/adapter_contact_searched"/>
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

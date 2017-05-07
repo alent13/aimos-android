@@ -62,7 +62,6 @@
         android:layout_above="@+id/message_type_layout"
         android:layout_below="@+id/message_toolbar"
         android:background="@drawable/bg_repeate_image"
-        android:stackFromBottom="true"
         tools:listitem="@layout/adapter_message_from"/>
 
     <LinearLayout

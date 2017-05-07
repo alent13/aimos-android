@@ -1,39 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="horizontal"
-              android:layout_width="match_parent"
-              android:layout_height="96dp"
-              android:padding="16dp">
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="80dp"
+    android:orientation="horizontal">
 
-    <com.applexis.aimos_android.ui.customview.SquareImageView
+    <ImageView
+        android:id="@+id/adapter_dialog_logo"
         android:layout_width="48dp"
         android:layout_height="match_parent"
-        android:src="@drawable/ic_dialog_default"
-        android:id="@+id/imageView"/>
+        android:layout_marginLeft="8dp"
+        android:src="@drawable/ic_dialog_default" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_toRightOf="@+id/adapter_dialog_logo"
+        android:layout_toLeftOf="@+id/adapter_dialog_right_arrow"
         android:layout_marginLeft="16dp"
-        android:orientation="vertical"
-        android:gravity="center_vertical">
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="vertical">
+
         <TextView
-            android:id="@+id/dialog_name"
+            android:id="@+id/adapter_dialog_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Dialog Name"
             android:fontFamily="sans-serif-medium"
-            android:textSize="24dp"/>
-        <TextView
+            android:lines="1"
+            android:text="Super Long Dialog Name"
+            android:textSize="24dp" />
+
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="last message"
-            android:fontFamily="sans-serif-light"
-            android:textSize="18dp"/>
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/adapter_dialog_last_sender"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-light"
+                android:text="@string/dialogLastMessageNameText"
+                android:textSize="18dp" />
+
+            <TextView
+                android:id="@+id/adapter_dialog_last_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-light"
+                android:text="messageText"
+                android:maxLines="2"
+                android:textSize="18dp" />
+        </LinearLayout>
     </LinearLayout>
+
     <ImageView
+        android:id="@+id/adapter_dialog_right_arrow"
         android:layout_width="40dp"
         android:layout_height="match_parent"
-        android:src="@drawable/ic_arrow_right"
-        android:layout_marginLeft="-40dp"/>
-</LinearLayout>
+        android:layout_alignParentRight="true"
+        android:src="@drawable/ic_arrow_right" />
+</RelativeLayout>

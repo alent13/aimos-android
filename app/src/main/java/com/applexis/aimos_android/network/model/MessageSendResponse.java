@@ -1,6 +1,8 @@
 package com.applexis.aimos_android.network.model;
 
-public class MessageSendResponse {
+import com.applexis.utils.crypto.AESCrypto;
+
+public class MessageSendResponse extends ResponseBase {
 
     public enum ErrorType {
         BAD_PUBLIC_KEY,
@@ -10,42 +12,37 @@ public class MessageSendResponse {
         DATABASE_ERROR
     }
 
-    private Long id;
-
-    private boolean success;
-
-    private String errorType;
+    private String id;
 
     public MessageSendResponse() {
-        success = false;
     }
 
-    public MessageSendResponse(String errorType) {
-        this.success = false;
-        this.errorType = errorType;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
+    public MessageSendResponse(String success, String errorType, String id) {
+        super(success, errorType);
         this.id = id;
     }
 
-    public boolean isSuccess() {
-        return success;
+    public MessageSendResponse(AESCrypto aes) {
+        super(aes);
     }
 
-    public void setSuccess(boolean success) {
-        this.success = success;
+    public MessageSendResponse(String errorType, AESCrypto aes) {
+        super(errorType, aes);
     }
 
-    public String getErrorType() {
-        return errorType;
+    public Long getId(AESCrypto aes) {
+        return Long.valueOf(aes.decrypt(id));
     }
 
-    public void setErrorType(String errorType) {
-        this.errorType = errorType;
+    public void setId(Long id, AESCrypto aes) {
+        this.id = aes.encrypt(String.valueOf(id));
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }

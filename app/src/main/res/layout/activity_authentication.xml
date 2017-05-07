@@ -40,7 +40,7 @@
         android:layout_marginTop="32dp"
         android:background="@drawable/bg_ui_rounded"
         android:fontFamily="sans-serif-light"
-        android:hint="Логин"
+        android:hint="@string/loginHintText"
         android:imeOptions="actionNext"
         android:paddingLeft="24dp"
         android:textSize="24dp"
@@ -115,9 +115,30 @@
         android:layout_marginTop="24dp"
         android:background="@drawable/bg_ui_rounded"
         android:fontFamily="sans-serif-light"
-        android:text="Войти"
+        android:text="@string/loginText"
         android:textSize="20sp"
-        android:layout_below="@+id/auth_password_layout"/>
+        android:layout_below="@+id/auth_password_layout"
+        android:visibility="visible"/>
+
+    <FrameLayout
+        android:id="@+id/auth_login_load_indicator"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginLeft="32dp"
+        android:layout_marginRight="32dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="24dp"
+        android:visibility="invisible"
+        android:background="@drawable/bg_ui_rounded"
+        android:layout_below="@+id/auth_password_layout">
+
+        <com.wang.avi.AVLoadingIndicatorView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:indicatorName="com.applexis.aimos_android.ui.customview.BallPulseFiveIndicator"
+            android:layout_gravity="center"/>
+    </FrameLayout>
 
     <TextView
         android:id="@+id/auth_key_update"
@@ -128,7 +149,7 @@
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
         android:layout_marginStart="16dp"
-        android:text="@string/update_keys_text"
+        android:text="@string/updateKeysText"
         android:textSize="20sp"
         android:gravity="center"
         android:textColor="@color/transparent_white"
@@ -142,7 +163,7 @@
         android:layout_marginRight="32dp"
         android:background="@drawable/bg_ui_rounded"
         android:fontFamily="sans-serif-light"
-        android:text="Регистрация"
+        android:text="@string/registrationText"
         android:textSize="20sp"
         android:layout_alignParentBottom="true"
         android:layout_alignLeft="@+id/auth_login_btn"

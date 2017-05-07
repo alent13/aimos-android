@@ -2,29 +2,21 @@ package com.applexis.aimos_android.ui.activity;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.graphics.Typeface;
+import android.os.Bundle;
 import android.support.design.widget.TextInputEditText;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.text.Editable;
-import android.text.InputType;
-import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.applexis.aimos_android.R;
-import com.applexis.aimos_android.network.KeyExchange;
-import com.applexis.aimos_android.utils.SharedPreferencesHelper;
-import com.applexis.aimos_android.network.model.LoginResponse;
+import com.applexis.aimos_android.network.KeyExchangeAPI;
 import com.applexis.aimos_android.network.MessengerAPI;
 import com.applexis.aimos_android.network.MessengerAPIClient;
-import com.applexis.aimos_android.utils.DESCryptoHelper;
-
-import java.security.Key;
+import com.applexis.aimos_android.network.model.LoginResponse;
+import com.applexis.aimos_android.utils.SharedPreferencesHelper;
+import com.applexis.utils.crypto.AESCrypto;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -33,15 +25,19 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class AuthenticationActivity extends AppCompatActivity implements KeyExchange.KeyExchangeListener {
+public class AuthenticationActivity extends AppCompatActivity implements KeyExchangeAPI.KeyExchangeListener {
 
     @BindView(R.id.auth_login)
     EditText loginText;
     @BindView(R.id.auth_password)
     TextInputEditText passwordText;
+    @BindView(R.id.auth_login_load_indicator)
+    View loadIndicator;
+    @BindView(R.id.auth_login_btn)
+    View loginButton;
 
     private MessengerAPI messengerAPI;
-    private KeyExchange keyExchange;
+    private KeyExchangeAPI keyExchange;
 
     private ProgressDialog progressDialog;
 
@@ -55,7 +51,7 @@ public class AuthenticationActivity extends AppCompatActivity implements KeyExch
         ButterKnife.bind(this);
         SharedPreferencesHelper.initialize(this);
         messengerAPI = MessengerAPIClient.getClient().create(MessengerAPI.class);
-        keyExchange = new KeyExchange();
+        keyExchange = new KeyExchangeAPI();
         keyExchange.setKeyExchangeListener(this);
 
         String token = SharedPreferencesHelper.getToken();
@@ -88,15 +84,15 @@ public class AuthenticationActivity extends AppCompatActivity implements KeyExch
     }
 
     public void checkToken() {
-        String desKeyString = SharedPreferencesHelper.getGlobalDesKey();
-        if (!desKeyString.equals("")) {
+        String aesKeyString = SharedPreferencesHelper.getGlobalAesKey();
+        if (!aesKeyString.equals("")) {
             String rsaPublic = SharedPreferencesHelper.getGlobalPublicKey();
-            Key DESKey = DESCryptoHelper.getKey(desKeyString);
+            AESCrypto aes = new AESCrypto(aesKeyString);
             String token = SharedPreferencesHelper.getToken();
-            String eToken = DESCryptoHelper.encrypt(DESKey, token);
+            String eToken = aes.encrypt(token);
             final Call<LoginResponse> ckeckTokenRequest = messengerAPI.checkToken(eToken, rsaPublic);
             sendCheckTokenRequest(ckeckTokenRequest);
-        } else if (desKeyString.equals("")) {
+        } else if (aesKeyString.equals("")) {
             checkTokenWaitForKeys = true;
             keyExchange.updateKeys();
         }
@@ -106,20 +102,21 @@ public class AuthenticationActivity extends AppCompatActivity implements KeyExch
         checkTokenRequest.enqueue(new Callback<LoginResponse>() {
             @Override
             public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
-                if (response.body() != null && response.body().isSuccess()) {
-                    SharedPreferencesHelper.setId(response.body().getId());
-                    SharedPreferencesHelper.setLogin(response.body().getLogin());
-                    SharedPreferencesHelper.setName(response.body().getName());
-                    SharedPreferencesHelper.setSurname(response.body().getSurname());
-                    SharedPreferencesHelper.setToken(response.body().getToken());
+                AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
+                if (response.body() != null && response.body().check(aes)) {
+                    SharedPreferencesHelper.setId(response.body().getUserMinimalInfo().getId(aes));
+                    SharedPreferencesHelper.setLogin(response.body().getUserMinimalInfo().getLogin(aes));
+                    SharedPreferencesHelper.setName(response.body().getUserMinimalInfo().getName(aes));
+                    SharedPreferencesHelper.setSurname(response.body().getUserMinimalInfo().getSurname(aes));
+                    SharedPreferencesHelper.setToken(response.body().getToken(aes));
                     startActivity(new Intent(AuthenticationActivity.this, MainActivity.class));
                     progressDialog.hide();
                     finish();
                 } else {
                     if (response.body() != null) {
-                        Toast.makeText(AuthenticationActivity.this, "Check Token Error: " + response.body().getErrorType(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(AuthenticationActivity.this, "Check Token Error: " + response.body().getErrorType(aes), Toast.LENGTH_SHORT).show();
                         if (response.body().getErrorType().equals(LoginResponse.ErrorType.BAD_PUBLIC_KEY.name())) {
-                            SharedPreferencesHelper.setGlobalDesKey("");
+                            SharedPreferencesHelper.setGlobalAesKey("");
                             SharedPreferencesHelper.setGlobalPublicKey("");
                             SharedPreferencesHelper.setGlobalPrivateKey("");
                             checkTokenWaitForKeys = true;
@@ -145,13 +142,15 @@ public class AuthenticationActivity extends AppCompatActivity implements KeyExch
     }
 
     private void loginSend() {
-        String desKeyString = SharedPreferencesHelper.getGlobalDesKey();
+        String desKeyString = SharedPreferencesHelper.getGlobalAesKey();
         if (!loginText.getText().toString().equals("") && !passwordText.getText().toString().equals("") && !desKeyString.equals("")) {
             String rsaPublic = SharedPreferencesHelper.getGlobalPublicKey();
-            Key DESKey = DESCryptoHelper.getKey(desKeyString);
-            String eLogin = DESCryptoHelper.encrypt(DESKey, loginText.getText().toString());
-            String ePassword = DESCryptoHelper.encrypt(DESKey, passwordText.getText().toString());
+            AESCrypto aes = new AESCrypto(desKeyString);
+            String eLogin = aes.encrypt(loginText.getText().toString());
+            String ePassword = aes.encrypt(passwordText.getText().toString());
             final Call<LoginResponse> loginRequest = messengerAPI.login(eLogin, ePassword, rsaPublic);
+            loadIndicator.setVisibility(View.VISIBLE);
+            loginButton.setVisibility(View.GONE);
             sendLoginRequest(loginRequest);
         } else if (desKeyString.equals("")) {
             loginWaitForKeys = true;
@@ -159,29 +158,32 @@ public class AuthenticationActivity extends AppCompatActivity implements KeyExch
         }
     }
 
-    private void sendLoginRequest(Call<LoginResponse> loginRequest) {
+    private void sendLoginRequest(final Call<LoginResponse> loginRequest) {
         loginRequest.enqueue(new Callback<LoginResponse>() {
             @Override
             public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
-                if (response.body() != null && response.body().isSuccess()) {
-                    SharedPreferencesHelper.setId(response.body().getId());
-                    SharedPreferencesHelper.setLogin(response.body().getLogin());
-                    SharedPreferencesHelper.setName(response.body().getName());
-                    SharedPreferencesHelper.setSurname(response.body().getSurname());
-                    SharedPreferencesHelper.setToken(response.body().getToken());
+                AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
+                if (response.body() != null && response.body().check(aes)) {
+                    SharedPreferencesHelper.setId(response.body().getUserMinimalInfo().getId(aes));
+                    SharedPreferencesHelper.setLogin(response.body().getUserMinimalInfo().getLogin(aes));
+                    SharedPreferencesHelper.setName(response.body().getUserMinimalInfo().getName(aes));
+                    SharedPreferencesHelper.setSurname(response.body().getUserMinimalInfo().getSurname(aes));
+                    SharedPreferencesHelper.setToken(response.body().getToken(aes));
                     startActivity(new Intent(AuthenticationActivity.this, MainActivity.class));
                     finish();
                 } else {
                     if (response.body() != null) {
-                        Toast.makeText(AuthenticationActivity.this, "Login Error: " + response.body().getErrorType(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(AuthenticationActivity.this, "Login Error: " + response.body().getErrorType(aes), Toast.LENGTH_LONG).show();
                         if (response.body().getErrorType().equals(LoginResponse.ErrorType.BAD_PUBLIC_KEY.name())) {
                             loginWaitForKeys = true;
                             keyExchange.updateKeys();
                         }
                     } else {
-                        Toast.makeText(AuthenticationActivity.this, "Login Error", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(AuthenticationActivity.this, "Login Error", Toast.LENGTH_LONG).show();
                     }
                 }
+                loadIndicator.setVisibility(View.GONE);
+                loginButton.setVisibility(View.VISIBLE);
             }
 
             @Override
@@ -189,13 +191,15 @@ public class AuthenticationActivity extends AppCompatActivity implements KeyExch
                 Toast.makeText(AuthenticationActivity.this, "Login Request Error (" +
                         t.getMessage() + ")", Toast.LENGTH_SHORT).show();
                 t.printStackTrace();
+                loadIndicator.setVisibility(View.GONE);
+                loginButton.setVisibility(View.VISIBLE);
             }
         });
     }
 
     @Override
     public void onKeyExchangeSuccess() {
-        Toast.makeText(this, R.string.key_update_success, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.keyUpdateSuccess, Toast.LENGTH_SHORT).show();
         if (loginWaitForKeys) {
             loginSend();
             loginWaitForKeys = false;
@@ -208,6 +212,6 @@ public class AuthenticationActivity extends AppCompatActivity implements KeyExch
 
     @Override
     public void onKeyExchangeFailure() {
-        Toast.makeText(this, R.string.key_update_failure, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.keyUpdateFailure, Toast.LENGTH_SHORT).show();
     }
 }

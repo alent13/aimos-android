@@ -15,18 +15,17 @@ import com.applexis.aimos_android.R;
 import com.applexis.aimos_android.network.model.MessageMinimal;
 import com.applexis.aimos_android.ui.adapter.DialogsAdapter;
 import com.applexis.aimos_android.ui.adapter.MessageAdapter;
-import com.applexis.aimos_android.network.KeyExchange;
+import com.applexis.aimos_android.network.KeyExchangeAPI;
 import com.applexis.aimos_android.network.MessengerAPI;
 import com.applexis.aimos_android.network.MessengerAPIClient;
 import com.applexis.aimos_android.network.model.DialogListResponse;
 import com.applexis.aimos_android.network.model.DialogMinimal;
 import com.applexis.aimos_android.network.model.GetMessageResponse;
 import com.applexis.aimos_android.network.model.MessageSendResponse;
-import com.applexis.aimos_android.utils.DESCryptoHelper;
-import com.applexis.aimos_android.utils.DSACryptoHelper;
 import com.applexis.aimos_android.utils.SharedPreferencesHelper;
+import com.applexis.utils.crypto.AESCrypto;
+import com.applexis.utils.crypto.DSASign;
 
-import java.security.Key;
 import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +37,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class DialogActivity extends AppCompatActivity implements KeyExchange.KeyExchangeListener {
+public class DialogActivity extends AppCompatActivity implements KeyExchangeAPI.KeyExchangeListener {
 
     private DialogMinimal dialogInfo;
 
@@ -50,7 +49,7 @@ public class DialogActivity extends AppCompatActivity implements KeyExchange.Key
     public TextView mDialogName;
 
     private MessengerAPI messengerAPI;
-    private KeyExchange keyExchange;
+    private KeyExchangeAPI keyExchange;
 
     private MessageAdapter mAdapter;
 
@@ -62,20 +61,24 @@ public class DialogActivity extends AppCompatActivity implements KeyExchange.Key
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dialog);
         ButterKnife.bind(this);
+
+        AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
+
         dialogInfo = getIntent().getParcelableExtra(DialogsAdapter.DIALOG);
 
         messengerAPI = MessengerAPIClient.getClient().create(MessengerAPI.class);
-        keyExchange = new KeyExchange();
+        keyExchange = new KeyExchangeAPI();
         keyExchange.setKeyExchangeListener(this);
 
         List<MessageMinimal> mMessageList = new ArrayList<>();
         mAdapter = new MessageAdapter(this, mMessageList);
-        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
+        LinearLayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
+        mLayoutManager.setReverseLayout(true);
         mMessageRecycleView.setLayoutManager(mLayoutManager);
         mMessageRecycleView.setItemAnimator(new DefaultItemAnimator());
         mMessageRecycleView.setAdapter(mAdapter);
 
-        mDialogName.setText(dialogInfo.getName());
+        mDialogName.setText(dialogInfo.getName(aes));
         getMessages();
     }
 
@@ -91,23 +94,24 @@ public class DialogActivity extends AppCompatActivity implements KeyExchange.Key
 
     private void getMessages() {
         String token = SharedPreferencesHelper.getToken();
-        String desKeyString = SharedPreferencesHelper.getGlobalDesKey();
-        Key desKey = DESCryptoHelper.getKey(desKeyString);
-        String eToken = DESCryptoHelper.encrypt(desKey, token);
-        String eCount = DESCryptoHelper.encrypt(desKey, Long.toString(10));
-        String eOffset = DESCryptoHelper.encrypt(desKey, Long.toString(0));
-        String eIdDialog = DESCryptoHelper.encrypt(desKey, Long.toString(dialogInfo.getId()));
+        String desKeyString = SharedPreferencesHelper.getGlobalAesKey();
+        final AESCrypto aes = new AESCrypto(desKeyString);
+        String eToken = aes.encrypt(token);
+        String eCount = aes.encrypt(Long.toString(10));
+        String eOffset = aes.encrypt(Long.toString(0));
+        String eIdDialog = aes.encrypt(Long.toString(dialogInfo.getId(aes)));
         final Call<GetMessageResponse> request = messengerAPI.getLastMessages(eCount, eOffset, eIdDialog, eToken, SharedPreferencesHelper.getGlobalPublicKey());
         request.enqueue(new Callback<GetMessageResponse>() {
             @Override
             public void onResponse(Call<GetMessageResponse> call, Response<GetMessageResponse> response) {
                 if (response.body() != null) {
-                    if (response.body().isSuccess()) {
+                    if (response.body().check(aes)) {
                         if(response.body().getMessageMinimals() != null) {
                             mAdapter.updateMessageList(response.body().getMessageMinimals());
+                            mMessageText.setText("");
                         }
                     } else {
-                        Toast.makeText(DialogActivity.this, "Ошибка загрузки списка сообщений: " + response.body().getErrorType(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(DialogActivity.this, "Ошибка загрузки списка сообщений: " + response.body().getErrorType(aes), Toast.LENGTH_SHORT).show();
                         if (response.body().getErrorType().equals(DialogListResponse.ErrorType.BAD_PUBLIC_KEY.name())) {
                             getMessageWaitForKeys = true;
                             keyExchange.updateKeys();
@@ -127,29 +131,28 @@ public class DialogActivity extends AppCompatActivity implements KeyExchange.Key
 
     private void sendMessage() {
         String message = mMessageText.getText().toString();
-        if(message.equals("")) {
+        if(!message.equals("")) {
             String token = SharedPreferencesHelper.getToken();
-            String desKeyString = SharedPreferencesHelper.getGlobalDesKey();
-            Key desKey = DESCryptoHelper.getKey(desKeyString);
-            Key desMessageKey = DESCryptoHelper.generateKey();
-            String eToken = DESCryptoHelper.encrypt(desKey, token);
-            String eIdDialog = DESCryptoHelper.encrypt(desKey, Long.toString(dialogInfo.getId()));
-            KeyPair keyPair = DSACryptoHelper.generateKeyPair();
-            String eEdsPublicKey = DESCryptoHelper.encrypt(desKey, DSACryptoHelper.getPublicKeyString(keyPair.getPublic()));
-            String eMessage = DESCryptoHelper.encrypt(desMessageKey, message);
-            String eKey;
-            eKey = DESCryptoHelper.encrypt(desKey, DESCryptoHelper.getKeyString(desMessageKey));
-            String eEds = Base64.encodeToString(DSACryptoHelper.generateSignature(keyPair.getPrivate(), eMessage.getBytes()), Base64.DEFAULT);
+            String desKeyString = SharedPreferencesHelper.getGlobalAesKey();
+            final AESCrypto aes = new AESCrypto(desKeyString);
+            AESCrypto aesMessage = new AESCrypto();
+            String eToken = aes.encrypt(token);
+            String eIdDialog = aes.encrypt(Long.toString(dialogInfo.getId(aes)));
+            KeyPair keyPair = DSASign.generateKeyPair();
+            String eEdsPublicKey = aes.encrypt(DSASign.getPublicKeyString(keyPair.getPublic()));
+            String eMessage = aesMessage.encrypt(message);
+            String eKey = aes.encrypt(aesMessage.getKeyString());
+            String eEds = Base64.encodeToString(DSASign.generateSignature(keyPair.getPrivate(), eMessage.getBytes()), Base64.DEFAULT);
             final Call<MessageSendResponse> request = messengerAPI.sendMessageEncrypted(eMessage, eKey, eEds, eEdsPublicKey, eIdDialog, eToken, SharedPreferencesHelper.getGlobalPublicKey());
             request.enqueue(new Callback<MessageSendResponse>() {
                 @Override
                 public void onResponse(Call<MessageSendResponse> call, Response<MessageSendResponse> response) {
                     if (response.body() != null) {
-                        if (response.body().isSuccess()) {
+                        if (response.body().check(aes)) {
                             getMessages();
                             mMessageText.setText("");
                         } else {
-                            Toast.makeText(DialogActivity.this, "Ошибка отправки сообщения: " + response.body().getErrorType(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(DialogActivity.this, "Ошибка отправки сообщения: " + response.body().getErrorType(aes), Toast.LENGTH_SHORT).show();
                             if (response.body().getErrorType().equals(DialogListResponse.ErrorType.BAD_PUBLIC_KEY.name())) {
                                 getMessageWaitForKeys = true;
                                 keyExchange.updateKeys();
@@ -170,7 +173,7 @@ public class DialogActivity extends AppCompatActivity implements KeyExchange.Key
 
     @Override
     public void onKeyExchangeSuccess() {
-        Toast.makeText(this, R.string.key_update_success, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.keyUpdateSuccess, Toast.LENGTH_SHORT).show();
         if (getMessageWaitForKeys) {
             getMessages();
             getMessageWaitForKeys = false;

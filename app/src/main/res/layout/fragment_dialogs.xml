@@ -29,7 +29,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
                 android:background="@drawable/bg_ui_rounded"
-                android:hint="Поиск..."
+                android:hint="@string/toolbarSearchText"
                 android:paddingLeft="42dp"
                 android:paddingRight="42dp"
                 android:layout_marginRight="48dp"
@@ -76,7 +76,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-light"
                 android:padding="5dp"
-                android:text="Загрузка списка диалогов..."
+                android:text="@string/dialogLoadText"
                 android:textSize="18sp"/>
         </LinearLayout>
 
@@ -94,7 +94,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-light"
                 android:padding="5dp"
-                android:text="Ошибка загрузки диалогов"
+                android:text="@string/dialogLoadErrorText"
                 android:textSize="18sp"/>
 
             <Button
@@ -106,9 +106,10 @@
                 android:textSize="20dp"/>
         </LinearLayout>
     </RelativeLayout>
-    <ListView
+    <android.support.v7.widget.RecyclerView
         android:id="@+id/dialogs_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/dialog_toolbar"/>
+        android:layout_below="@id/dialog_toolbar"
+        tools:listitem="@layout/adapter_dialog"/>
 </RelativeLayout>

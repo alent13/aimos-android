@@ -3,31 +3,88 @@ package com.applexis.aimos_android.network.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.applexis.utils.crypto.AESCrypto;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class DialogMinimal implements Parcelable {
 
-    protected Long id;
+    protected String id;
 
     protected String name;
+
+    private UserMinimalInfo lastSender;
+
+    private MessageMinimal lastMessage;
 
     protected List<UserMinimalInfo> users;
 
     public DialogMinimal() {
     }
 
-    public DialogMinimal(Long id, String name, List<UserMinimalInfo> users) {
+    public DialogMinimal(String id, String name, UserMinimalInfo lastSender, MessageMinimal lastMessage, List<UserMinimalInfo> users) {
         this.id = id;
         this.name = name;
+        this.lastSender = lastSender;
+        this.lastMessage = lastMessage;
         this.users = users;
     }
 
-    public Long getId() {
+    public DialogMinimal(Long id, String name, List<UserMinimalInfo> users, AESCrypto aes) {
+        this.id = aes.encrypt(String.valueOf(id));
+        this.name = aes.encrypt(name);
+        this.users = users;
+    }
+
+    private DialogMinimal(Parcel in) {
+        id = in.readString();
+        name = in.readString();
+        users = new ArrayList<>();
+        in.readList(users, getClass().getClassLoader());
+    }
+
+    public static final Creator<DialogMinimal> CREATOR = new Creator<DialogMinimal>() {
+        @Override
+        public DialogMinimal createFromParcel(Parcel in) {
+            return new DialogMinimal(in);
+        }
+
+        @Override
+        public DialogMinimal[] newArray(int size) {
+            return new DialogMinimal[size];
+        }
+    };
+
+    public Long getId(AESCrypto aes) {
+        return Long.valueOf(aes.decrypt(id));
+    }
+
+    public void setId(Long id, AESCrypto aes) {
+        this.id = aes.encrypt(String.valueOf(id));
+    }
+
+    public String getName(AESCrypto aes) {
+        return aes.decrypt(name);
+    }
+
+    public void setName(String name, AESCrypto aes) {
+        this.name = aes.encrypt(name);
+    }
+
+    public List<UserMinimalInfo> getUsers() {
+        return users;
+    }
+
+    public void setUsers(List<UserMinimalInfo> users) {
+        this.users = users;
+    }
+
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -39,12 +96,20 @@ public class DialogMinimal implements Parcelable {
         this.name = name;
     }
 
-    public List<UserMinimalInfo> getUsers() {
-        return users;
+    public UserMinimalInfo getLastSender() {
+        return lastSender;
     }
 
-    public void setUsers(List<UserMinimalInfo> users) {
-        this.users = users;
+    public void setLastSender(UserMinimalInfo lastSender) {
+        this.lastSender = lastSender;
+    }
+
+    public MessageMinimal getLastMessage() {
+        return lastMessage;
+    }
+
+    public void setLastMessage(MessageMinimal lastMessage) {
+        this.lastMessage = lastMessage;
     }
 
     @Override
@@ -53,25 +118,11 @@ public class DialogMinimal implements Parcelable {
     }
 
     @Override
-    public void writeToParcel(Parcel parcel, int i) {
-        parcel.writeLong(id);
-        parcel.writeString(name);
-        parcel.writeList(users);
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(id);
+        dest.writeString(name);
+        dest.writeList(users);
+        dest.writeParcelable(lastMessage, flags);
+        dest.writeParcelable(lastSender, flags);
     }
-
-    public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {
-        public DialogMinimal createFromParcel(Parcel in) {
-            return new DialogMinimal(in);
-        }
-        public DialogMinimal[] newArray(int size) {
-            return new DialogMinimal[size];
-        }
-    };
-    private DialogMinimal(Parcel in) {
-        id = in.readLong();
-        name = in.readString();
-        users = new ArrayList<>();
-        in.readList(users, getClass().getClassLoader());
-    }
-
 }

@@ -2,7 +2,6 @@ package com.applexis.aimos_android.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.widget.ListView;
 
 /**
  * @author applexis
@@ -16,7 +15,7 @@ public class SharedPreferencesHelper {
     public static final String APP_PREFERENCES_NAME = "aimos_name";
     public static final String APP_PREFERENCES_SURNAME = "aimos_surname";
     public static final String APP_PREFERENCES_TOKEN = "aimos_token";
-    public static final String APP_PREFERENCES_GLOBAL_DES_KEY = "aimos_global_des_key";
+    public static final String APP_PREFERENCES_GLOBAL_AES_KEY = "aimos_global_aes_key";
     public static final String APP_PREFERENCES_GLOBAL_PUBLIC_KEY = "aimos_global_public_key";
     public static final String APP_PREFERENCES_GLOBAL_PRIVATE_KEY = "aimos_global_private_key";
 
@@ -25,7 +24,7 @@ public class SharedPreferencesHelper {
     private static String name;
     private static String surname;
     private static String token;
-    private static String globalDesKey;
+    private static String globalAesKey;
     private static String globalPublicKey;
     private static String globalPrivateKey;
 
@@ -79,16 +78,16 @@ public class SharedPreferencesHelper {
         setValue(APP_PREFERENCES_TOKEN, token);
     }
 
-    public static String getGlobalDesKey() {
-        if(globalDesKey == null) {
-            globalDesKey = settings.getString(APP_PREFERENCES_GLOBAL_DES_KEY, "");
+    public static String getGlobalAesKey() {
+        if(globalAesKey == null) {
+            globalAesKey = settings.getString(APP_PREFERENCES_GLOBAL_AES_KEY, "");
         }
-        return globalDesKey;
+        return globalAesKey;
     }
 
-    public static void setGlobalDesKey(String globalDesKey) {
-        SharedPreferencesHelper.globalDesKey = globalDesKey;
-        setValue(APP_PREFERENCES_GLOBAL_DES_KEY, globalDesKey);
+    public static void setGlobalAesKey(String globalDesKey) {
+        SharedPreferencesHelper.globalAesKey = globalDesKey;
+        setValue(APP_PREFERENCES_GLOBAL_AES_KEY, globalDesKey);
     }
 
     public static String getGlobalPublicKey() {

@@ -3,7 +3,6 @@ package com.applexis.aimos_android.ui.adapter;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -11,8 +10,8 @@ import android.widget.TextView;
 
 import com.applexis.aimos_android.R;
 import com.applexis.aimos_android.network.model.MessageMinimal;
-import com.applexis.aimos_android.utils.DESCryptoHelper;
 import com.applexis.aimos_android.utils.SharedPreferencesHelper;
+import com.applexis.utils.crypto.AESCrypto;
 
 import java.util.Calendar;
 import java.util.List;
@@ -79,35 +78,27 @@ public class MessageAdapter extends RecyclerView.Adapter {
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
         MessageMinimal m = messageList.get(position);
         final ViewHolder vh = (ViewHolder) holder;
 
         Calendar c = Calendar.getInstance();
-        c.setTime(m.getDatetime());
-        String dateFormat = String.format(Locale.ENGLISH, "%d:%d:%d %d %s %d", c.get(Calendar.HOUR_OF_DAY),
-                c.get(Calendar.MINUTE), c.get(Calendar.SECOND), c.get(Calendar.DAY_OF_MONTH),
+        c.setTime(m.getDatetime(aes));
+        int hour = c.get(Calendar.HOUR_OF_DAY);
+        String hourString = String.format(Locale.ENGLISH, hour >= 10 ? "%d" : "0%d", hour);
+        int minute = c.get(Calendar.MINUTE);
+        String minuteString = String.format(Locale.ENGLISH, minute >= 10 ? "%d" : "0%d", minute);
+        int second = c.get(Calendar.SECOND);
+        String secondString = String.format(Locale.ENGLISH, second >= 10 ? "%d" : "0%d", second);
+        String dateFormat = String.format(Locale.ENGLISH, "%s:%s:%s %d %s %d", hourString,
+                minuteString, secondString, c.get(Calendar.DAY_OF_MONTH),
                 monthList[c.get(Calendar.MONTH)].substring(0, 3).toLowerCase(), c.get(Calendar.YEAR));
 
-        String decryptedMessage = DESCryptoHelper.decrypt(DESCryptoHelper.getKey(m.getKey()), m.geteText());
+        String decryptedMessage = new AESCrypto(m.getKey(aes)).decrypt(m.geteText(aes));
 
         vh.datetime.setText(dateFormat);
-        vh.text.setText(R.string.message_press_to_show_text);
-        vh.contentLayout.setTag(decryptedMessage);
-        vh.contentLayout.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch (motionEvent.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        vh.text.setText((String) view.getTag());
-                        break;
-                    case MotionEvent.ACTION_UP:
-                    case MotionEvent.ACTION_CANCEL:
-                        vh.text.setText(R.string.message_press_to_show_text);
-                        break;
-                }
-                return false;
-            }
-        });
+        vh.text.setText(decryptedMessage);
+
     }
 
     @Override
@@ -122,7 +113,8 @@ public class MessageAdapter extends RecyclerView.Adapter {
 
     @Override
     public int getItemViewType(int position) {
-        return messageList.get(position).getIdUserFrom().equals(SharedPreferencesHelper.getId()) ? 0 : 1;
+        AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
+        return messageList.get(position).getIdUserFrom(aes).equals(SharedPreferencesHelper.getId()) ? 0 : 1;
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {

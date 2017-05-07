@@ -10,14 +10,12 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.applexis.aimos_android.R;
-import com.applexis.aimos_android.network.KeyExchange;
+import com.applexis.aimos_android.network.KeyExchangeAPI;
 import com.applexis.aimos_android.network.MessengerAPI;
 import com.applexis.aimos_android.network.MessengerAPIClient;
 import com.applexis.aimos_android.network.model.LoginResponse;
-import com.applexis.aimos_android.utils.DESCryptoHelper;
 import com.applexis.aimos_android.utils.SharedPreferencesHelper;
-
-import java.security.Key;
+import com.applexis.utils.crypto.AESCrypto;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -26,7 +24,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class RegistrationActivity extends AppCompatActivity implements KeyExchange.KeyExchangeListener {
+public class RegistrationActivity extends AppCompatActivity implements KeyExchangeAPI.KeyExchangeListener {
 
     @BindView(R.id.registration_extra_layout)
     LinearLayout extraInfoLayout;
@@ -51,7 +49,7 @@ public class RegistrationActivity extends AppCompatActivity implements KeyExchan
     private boolean registrationWaitForKeyExchange = false;
 
     private MessengerAPI messengerAPI;
-    private KeyExchange keyExchange;
+    private KeyExchangeAPI keyExchange;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +57,7 @@ public class RegistrationActivity extends AppCompatActivity implements KeyExchan
         setContentView(R.layout.activity_registration);
         ButterKnife.bind(this);
         messengerAPI = MessengerAPIClient.getClient().create(MessengerAPI.class);
-        keyExchange = new KeyExchange();
+        keyExchange = new KeyExchangeAPI();
         keyExchange.setKeyExchangeListener(this);
     }
 
@@ -86,18 +84,18 @@ public class RegistrationActivity extends AppCompatActivity implements KeyExchan
         String phone = evPhone.getText().toString();
         String about = evAbout.getText().toString();
 
-        String desKeyString = SharedPreferencesHelper.getGlobalDesKey();
+        String desKeyString = SharedPreferencesHelper.getGlobalAesKey();
         String rsaPublic = SharedPreferencesHelper.getGlobalPublicKey();
 
         if (login != "" && password != "" && name != "" && surname != "" && desKeyString != "") {
-            Key DESKey = DESCryptoHelper.getKey(desKeyString);
-            String eLogin = DESCryptoHelper.encrypt(DESKey, login);
-            String eName = DESCryptoHelper.encrypt(DESKey, name);
-            String eSurname = DESCryptoHelper.encrypt(DESKey, surname);
-            String ePassword = DESCryptoHelper.encrypt(DESKey, password);
-            String eEmail = DESCryptoHelper.encrypt(DESKey, email);
-            String ePhone = DESCryptoHelper.encrypt(DESKey, phone);
-            String eAbout = DESCryptoHelper.encrypt(DESKey, about);
+            AESCrypto aes = new AESCrypto(desKeyString);
+            String eLogin = aes.encrypt(login);
+            String eName = aes.encrypt(name);
+            String eSurname = aes.encrypt(surname);
+            String ePassword = aes.encrypt(password);
+            String eEmail = aes.encrypt(email);
+            String ePhone = aes.encrypt(phone);
+            String eAbout = aes.encrypt(about);
 
             Call<LoginResponse> registrateRequest = messengerAPI.registration(
                     eLogin, ePassword, eName,
@@ -107,11 +105,12 @@ public class RegistrationActivity extends AppCompatActivity implements KeyExchan
             registrateRequest.enqueue(new Callback<LoginResponse>() {
                 @Override
                 public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
-                    if (response.body() != null && response.body().isSuccess()) {
-                        SharedPreferencesHelper.setLogin(response.body().getLogin());
-                        SharedPreferencesHelper.setName(response.body().getName());
-                        SharedPreferencesHelper.setSurname(response.body().getSurname());
-                        SharedPreferencesHelper.setToken(response.body().getToken());
+                    AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
+                    if (response.body() != null && response.body().check(aes)) {
+                        SharedPreferencesHelper.setLogin(response.body().getUserMinimalInfo().getLogin(aes));
+                        SharedPreferencesHelper.setName(response.body().getUserMinimalInfo().getName(aes));
+                        SharedPreferencesHelper.setSurname(response.body().getUserMinimalInfo().getSurname(aes));
+                        SharedPreferencesHelper.setToken(response.body().getToken(aes));
                         startActivity(new Intent(RegistrationActivity.this, MainActivity.class));
                         finish();
                     } else {
@@ -121,7 +120,7 @@ public class RegistrationActivity extends AppCompatActivity implements KeyExchan
                                 registrationWaitForKeyExchange = true;
                                 keyExchange.updateKeys();
                             }
-                            Toast.makeText(RegistrationActivity.this, "Ошибка регистрации: " + response.body().getErrorType(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(RegistrationActivity.this, "Ошибка регистрации: " + response.body().getErrorType(aes), Toast.LENGTH_SHORT).show();
                         }
                     }
                 }
@@ -132,7 +131,7 @@ public class RegistrationActivity extends AppCompatActivity implements KeyExchan
                 }
             });
 
-        } else if (desKeyString == "") {
+        } else if (desKeyString.equals("")) {
             registrationWaitForKeyExchange = true;
             keyExchange.updateKeys();
         }
@@ -140,7 +139,7 @@ public class RegistrationActivity extends AppCompatActivity implements KeyExchan
 
     @Override
     public void onKeyExchangeSuccess() {
-        Toast.makeText(this, R.string.key_update_success, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.keyUpdateSuccess, Toast.LENGTH_SHORT).show();
         if (registrationWaitForKeyExchange) {
             registrationBtnClick();
             registrationWaitForKeyExchange = false;
@@ -149,6 +148,6 @@ public class RegistrationActivity extends AppCompatActivity implements KeyExchan
 
     @Override
     public void onKeyExchangeFailure() {
-        Toast.makeText(this, R.string.key_update_failure, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.keyUpdateFailure, Toast.LENGTH_SHORT).show();
     }
 }

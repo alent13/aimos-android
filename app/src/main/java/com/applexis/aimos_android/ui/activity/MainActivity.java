@@ -1,15 +1,14 @@
 package com.applexis.aimos_android.ui.activity;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 
 import com.applexis.aimos_android.R;
-import com.applexis.aimos_android.ui.adapter.MainViewPagerAdapter;
 import com.applexis.aimos_android.network.MessengerAPI;
 import com.applexis.aimos_android.network.MessengerAPIClient;
+import com.applexis.aimos_android.ui.adapter.MainViewPagerAdapter;
 
 import java.util.ArrayList;
 
@@ -40,35 +39,35 @@ public class MainActivity extends AppCompatActivity {
         models.add(
                 new NavigationTabBar.Model.Builder(
                         getResources().getDrawable(R.drawable.ic_my_page),
-                        ContextCompat.getColor(this, R.color.barColor1))
+                        ContextCompat.getColor(this, R.color.colorPrimaryDark))
                         .title(getString(R.string.home))
                         .build()
         );
         models.add(
                 new NavigationTabBar.Model.Builder(
                         getResources().getDrawable(R.drawable.ic_contacts),
-                        ContextCompat.getColor(this, R.color.barColor2))
+                        ContextCompat.getColor(this, R.color.colorPrimaryDark))
                         .title(getString(R.string.contacts))
                         .build()
         );
         models.add(
                 new NavigationTabBar.Model.Builder(
                         getResources().getDrawable(R.drawable.ic_dialogs),
-                        ContextCompat.getColor(this, R.color.barColor3))
+                        ContextCompat.getColor(this, R.color.colorPrimaryDark))
                         .title(getString(R.string.dialogs))
                         .build()
         );
         models.add(
                 new NavigationTabBar.Model.Builder(
                         getResources().getDrawable(R.drawable.ic_bell),
-                        ContextCompat.getColor(this, R.color.barColor4))
+                        ContextCompat.getColor(this, R.color.colorPrimaryDark))
                         .title(getString(R.string.notifications))
                         .build()
         );
         models.add(
                 new NavigationTabBar.Model.Builder(
                         getResources().getDrawable(R.drawable.ic_storage),
-                        ContextCompat.getColor(this, R.color.barColor5))
+                        ContextCompat.getColor(this, R.color.colorPrimaryDark))
                         .title(getString(R.string.storage))
                         .build()
         );

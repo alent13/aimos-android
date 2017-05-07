@@ -1,6 +1,8 @@
 package com.applexis.aimos_android.network.model;
 
-public class LoginResponse extends UserMinimalInfo {
+import com.applexis.utils.crypto.AESCrypto;
+
+public class LoginResponse extends ResponseBase {
 
     public enum ErrorType {
         USER_ALREADY_EXIST,
@@ -9,27 +11,33 @@ public class LoginResponse extends UserMinimalInfo {
         INCORRECT_TOKEN
     }
 
-    private boolean success;
-
-    private String errorType;
+    private UserMinimalInfo userMinimalInfo;
 
     private String token;
 
     public LoginResponse() {
-        this.success = false;
     }
 
-    public LoginResponse(String errorType) {
-        this.success = false;
-        this.errorType = errorType;
+    public LoginResponse(String success, String errorType, UserMinimalInfo userMinimalInfo, String token) {
+        super(success, errorType);
+        this.userMinimalInfo = userMinimalInfo;
+        this.token = token;
     }
 
-    public boolean isSuccess() {
-        return success;
+    public LoginResponse(AESCrypto aes) {
+        super(aes);
     }
 
-    public void setSuccess(boolean success) {
-        this.success = success;
+    public LoginResponse(String errorType, AESCrypto aes) {
+        super(errorType, aes);
+    }
+
+    public String getToken(AESCrypto aes) {
+        return aes.decrypt(token);
+    }
+
+    public void setToken(String token, AESCrypto aes) {
+        this.token = aes.encrypt(token);
     }
 
     public String getToken() {
@@ -40,11 +48,11 @@ public class LoginResponse extends UserMinimalInfo {
         this.token = token;
     }
 
-    public String getErrorType() {
-        return errorType;
+    public UserMinimalInfo getUserMinimalInfo() {
+        return userMinimalInfo;
     }
 
-    public void setErrorType(String errorType) {
-        this.errorType = errorType;
+    public void setUserMinimalInfo(UserMinimalInfo userMinimalInfo) {
+        this.userMinimalInfo = userMinimalInfo;
     }
 }

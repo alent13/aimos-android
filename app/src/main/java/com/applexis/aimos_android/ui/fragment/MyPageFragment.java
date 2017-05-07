@@ -11,16 +11,16 @@ import android.widget.Toast;
 
 import com.applexis.aimos_android.R;
 import com.applexis.aimos_android.ui.activity.AuthenticationActivity;
-import com.applexis.aimos_android.network.KeyExchange;
+import com.applexis.aimos_android.network.KeyExchangeAPI;
 import com.applexis.aimos_android.utils.SharedPreferencesHelper;
 
 /**
  * @author applexis
  */
 
-public class MyPageFragment extends Fragment implements KeyExchange.KeyExchangeListener {
+public class MyPageFragment extends Fragment implements KeyExchangeAPI.KeyExchangeListener {
 
-    private KeyExchange keyExchange;
+    private KeyExchangeAPI keyExchange;
 
     private TextView nameSurnameText;
     private TextView loginText;
@@ -33,7 +33,7 @@ public class MyPageFragment extends Fragment implements KeyExchange.KeyExchangeL
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_my_page, container, false);
-        keyExchange = new KeyExchange();
+        keyExchange = new KeyExchangeAPI();
         keyExchange.setKeyExchangeListener(this);
 
         nameSurnameText = (TextView) view.findViewById(R.id.my_page_name_surname);
@@ -68,7 +68,7 @@ public class MyPageFragment extends Fragment implements KeyExchange.KeyExchangeL
             nameSurnameText.setText(SharedPreferencesHelper.getName() + " " + SharedPreferencesHelper.getSurname());
             loginText.setText(SharedPreferencesHelper.getLogin());
             tokenText.setText(SharedPreferencesHelper.getToken());
-            desKeyText.setText(SharedPreferencesHelper.getGlobalDesKey());
+            desKeyText.setText(SharedPreferencesHelper.getGlobalAesKey());
             publicKeyText.setText(SharedPreferencesHelper.getGlobalPublicKey());
             privateKeyText.setText(SharedPreferencesHelper.getGlobalPrivateKey());
         }
@@ -76,12 +76,12 @@ public class MyPageFragment extends Fragment implements KeyExchange.KeyExchangeL
 
     @Override
     public void onKeyExchangeSuccess() {
-        Toast.makeText(getContext(), R.string.key_update_success, Toast.LENGTH_SHORT).show();
+        Toast.makeText(getContext(), R.string.keyUpdateSuccess, Toast.LENGTH_SHORT).show();
         updateTextValues();
     }
 
     @Override
     public void onKeyExchangeFailure() {
-        Toast.makeText(getContext(), R.string.key_update_failure, Toast.LENGTH_SHORT).show();
+        Toast.makeText(getContext(), R.string.keyUpdateFailure, Toast.LENGTH_SHORT).show();
     }
 }

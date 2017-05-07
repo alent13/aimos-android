@@ -2,10 +2,10 @@
     <string name="app_name" translatable="false">Aimos</string>
     <string name="font_nautiluspompilius" translatable="false">fonts/nautiluspompilius.ttf</string>
 
-    <string name="key_update_success">Keys successfully updated</string>
-    <string name="key_update_failure">Error while updating keys, please try again.</string>
-    <string name="update_keys_text"><u>Update Keys</u></string>
-    <string name="message_press_to_show_text">Click on the message to read</string>
+    <string name="keyUpdateSuccess">Keys successfully updated</string>
+    <string name="keyUpdateFailure">Error while updating keys, please try again.</string>
+    <string name="updateKeysText"><u>Update Keys</u></string>
+    <string name="pressMessageToShowText">Click on the message to read</string>
 
     <string name="january">January</string>
     <string name="february">February</string>
@@ -34,5 +34,16 @@
     <string name="dialogs">Dialogs</string>
     <string name="notifications">Notice</string>
     <string name="storage">Storage</string>
-    <string name="password_hint">Пароль</string>
+    <string name="loginText">Login</string>
+    <string name="password_hint">Password</string>
+    <string name="registrationText">Registration</string>
+    <string name="loginHintText">Username</string>
+    <string name="synchronizationText">Synchronization</string>
+    <string name="toolbarSearchText">Search...</string>
+    <string name="dialogLoadErrorText">Dialog load error</string>
+    <string name="contactLoadErrorText">Contact load error</string>
+    <string name="contactLoadText">Loading contacts</string>
+    <string name="dialogLoadText">Loading dialogs</string>
+    <string name="dialogLastMessageNameText">%s:</string>
+    <string name="dialogLastMyMessageText">You:</string>
 </resources>

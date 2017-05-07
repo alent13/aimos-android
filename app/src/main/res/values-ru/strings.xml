@@ -1,9 +1,9 @@
 <resources>
 
-    <string name="key_update_success">Ключи успешно обновлены</string>
-    <string name="key_update_failure">Ошибка обновления ключей, пожалуйста, повторите попытку</string>
-    <string name="update_keys_text"><u>Обновить ключи</u></string>
-    <string name="message_press_to_show_text">Нажмите на сообщение, чтобы прочитать</string>
+    <string name="keyUpdateSuccess">Ключи успешно обновлены</string>
+    <string name="keyUpdateFailure">Ошибка обновления ключей, пожалуйста, повторите попытку</string>
+    <string name="updateKeysText"><u>Обновить ключи</u></string>
+    <string name="pressMessageToShowText">Нажмите на сообщение, чтобы прочитать</string>
 
     <string name="april">Апрель</string>
     <string name="august">Август</string>
@@ -23,5 +23,24 @@
     <string name="dialogs">Диалоги</string>
     <string name="notifications">Уведомления</string>
     <string name="storage">Хранилище</string>
+    <string name="copy">Копировать</string>
+    <string name="del">Удалить</string>
+    <string name="loginText">Войти</string>
+    <string name="move">Переместить</string>
+    <string name="password_hint">Пароль</string>
+    <string name="rename">Переименовать</string>
+    <string name="settings">Настройки</string>
+    <string name="sort">Сортировать</string>
+    <string name="sync">Синхронизировать</string>
+    <string name="properties">Свойства</string>
+    <string name="registrationText">Регистрация</string>
+    <string name="loginHintText">Логин</string>
+    <string name="toolbarSearchText">Поиск...</string>
+    <string name="dialogLoadErrorText">Ошибка загрузки диалогов</string>
+    <string name="contactLoadText">Загрузка списка контактов...</string>
+    <string name="contactLoadErrorText">Ошибка загрузки контактов</string>
+    <string name="dialogLoadText">Загрузка списка диалогов...</string>
+    <string name="synchronizationText">Синхронизация</string>
+    <string name="dialogLastMyMessageText">"Я: "</string>
 
 </resources>

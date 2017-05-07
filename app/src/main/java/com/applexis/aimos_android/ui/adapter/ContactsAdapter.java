@@ -2,29 +2,29 @@ package com.applexis.aimos_android.ui.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.applexis.aimos_android.R;
-import com.applexis.aimos_android.ui.activity.DialogActivity;
-import com.applexis.aimos_android.network.KeyExchange;
+import com.applexis.aimos_android.network.KeyExchangeAPI;
 import com.applexis.aimos_android.network.MessengerAPI;
 import com.applexis.aimos_android.network.MessengerAPIClient;
 import com.applexis.aimos_android.network.model.DialogResponse;
 import com.applexis.aimos_android.network.model.LoginResponse;
 import com.applexis.aimos_android.network.model.UserMinimalInfo;
-import com.applexis.aimos_android.utils.DESCryptoHelper;
+import com.applexis.aimos_android.ui.activity.DialogActivity;
 import com.applexis.aimos_android.utils.SharedPreferencesHelper;
+import com.applexis.utils.crypto.AESCrypto;
 
-import java.security.Key;
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -33,14 +33,14 @@ import retrofit2.Response;
  * @author applexis
  */
 
-public class ContactsAdapter extends BaseAdapter implements KeyExchange.KeyExchangeListener {
+public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> implements KeyExchangeAPI.KeyExchangeListener {
 
     public List<UserMinimalInfo> contactList = new ArrayList<>();
     private Context ctx;
     private LayoutInflater lInflater;
 
     private static MessengerAPI messengerAPI = MessengerAPIClient.getClient().create(MessengerAPI.class);
-    private KeyExchange keyExchange;
+    private KeyExchangeAPI keyExchange;
 
     private boolean createDialogWaitForKeyExchange = false;
     Long tmpId;
@@ -50,18 +50,31 @@ public class ContactsAdapter extends BaseAdapter implements KeyExchange.KeyExcha
         this.ctx = context;
         this.lInflater = (LayoutInflater) ctx
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        keyExchange = new KeyExchange();
+        keyExchange = new KeyExchangeAPI();
         keyExchange.setKeyExchangeListener(this);
     }
 
     @Override
-    public int getCount() {
-        return contactList.size();
+    public ContactsAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View v = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.adapter_contact, parent, false);
+        return new ViewHolder(v);
     }
 
     @Override
-    public Object getItem(int i) {
-        return contactList.get(i);
+    public void onBindViewHolder(ContactsAdapter.ViewHolder holder, int position) {
+        AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
+        UserMinimalInfo u = contactList.get(position);
+
+        holder.nameSurnameText.setText(u.getName(aes) + " " + u.getSurname(aes));
+        holder.loginText.setText(String.format("@%s", u.getLogin(aes)));
+        holder.sendMessageButton.setTag(u.getId(aes));
+        holder.sendMessageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                createDialog((Long) view.getTag());
+            }
+        });
     }
 
     @Override
@@ -70,40 +83,22 @@ public class ContactsAdapter extends BaseAdapter implements KeyExchange.KeyExcha
     }
 
     @Override
-    public View getView(int i, View convertView, ViewGroup viewGroup) {
-        View view = convertView;
-        if (view == null) {
-            view = lInflater.inflate(R.layout.adapter_contact, viewGroup, false);
-        }
-
-        UserMinimalInfo u = contactList.get(i);
-
-        ((TextView) view.findViewById(R.id.contact_adapter_name_surname)).setText(u.getName() + " " + u.getSurname());
-        ((TextView) view.findViewById(R.id.contact_adapter_login)).setText(String.format("@%s", u.getLogin()));
-        ImageView sendMessageImage = ((ImageView) view.findViewById(R.id.contact_adapter_send_message));
-        sendMessageImage.setTag(u.getId());
-        sendMessageImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                createDialog((Long) view.getTag());
-            }
-        });
-
-        return view;
+    public int getItemCount() {
+        return contactList.size();
     }
 
     private void createDialog(Long id) {
         tmpId = id;
-        String desKeyString = SharedPreferencesHelper.getGlobalDesKey();
-        if (desKeyString != "") {
+        String desKeyString = SharedPreferencesHelper.getGlobalAesKey();
+        if (!desKeyString.equals("")) {
             String rsaPublic = SharedPreferencesHelper.getGlobalPublicKey();
-            Key DESKey = DESCryptoHelper.getKey(desKeyString);
+            AESCrypto aes = new AESCrypto(desKeyString);
             String token = SharedPreferencesHelper.getToken();
-            String eToken = DESCryptoHelper.encrypt(DESKey, token);
-            String eIdUser = DESCryptoHelper.encrypt(DESKey, Long.toString(id));
+            String eToken = aes.encrypt(token);
+            String eIdUser = aes.encrypt(Long.toString(id));
             final Call<DialogResponse> createDialogRequest = messengerAPI.createDialog(eIdUser, eToken, rsaPublic);
             sendCreateDialogRequest(createDialogRequest);
-        } else if (desKeyString == "") {
+        } else {
             createDialogWaitForKeyExchange = true;
             keyExchange.updateKeys();
         }
@@ -113,13 +108,14 @@ public class ContactsAdapter extends BaseAdapter implements KeyExchange.KeyExcha
         createDialogRequest.enqueue(new Callback<DialogResponse>() {
             @Override
             public void onResponse(Call<DialogResponse> call, Response<DialogResponse> response) {
-                if (response.body() != null && response.body().isSuccess()) {
+                AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
+                if (response.body() != null && response.body().check(aes)) {
                     Intent intent = new Intent(ctx, DialogActivity.class);
-                    intent.putExtra(DialogsAdapter.DIALOG, response.body());
+                    intent.putExtra(DialogsAdapter.DIALOG, response.body().getDialog());
                     ctx.startActivity(intent);
                 } else {
                     if (response.body() != null) {
-                        Toast.makeText(ctx, "Create Dialog Error: " + response.body().getErrorType(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ctx, "Create Dialog Error: " + response.body().getErrorType(aes), Toast.LENGTH_SHORT).show();
                         if (response.body().getErrorType().equals(LoginResponse.ErrorType.BAD_PUBLIC_KEY.name())) {
                             createDialogWaitForKeyExchange = true;
                             keyExchange.updateKeys();
@@ -141,7 +137,7 @@ public class ContactsAdapter extends BaseAdapter implements KeyExchange.KeyExcha
 
     @Override
     public void onKeyExchangeSuccess() {
-        Toast.makeText(ctx, R.string.key_update_success, Toast.LENGTH_SHORT).show();
+        Toast.makeText(ctx, R.string.keyUpdateSuccess, Toast.LENGTH_SHORT).show();
         if (createDialogWaitForKeyExchange) {
             createDialog(tmpId);
             createDialogWaitForKeyExchange = false;
@@ -150,6 +146,20 @@ public class ContactsAdapter extends BaseAdapter implements KeyExchange.KeyExcha
 
     @Override
     public void onKeyExchangeFailure() {
-        Toast.makeText(ctx, R.string.key_update_failure, Toast.LENGTH_SHORT).show();
+        Toast.makeText(ctx, R.string.keyUpdateFailure, Toast.LENGTH_SHORT).show();
+    }
+
+    class ViewHolder extends RecyclerView.ViewHolder {
+        @BindView(R.id.contact_adapter_name_surname)
+        public TextView nameSurnameText;
+        @BindView(R.id.contact_adapter_login)
+        public TextView loginText;
+        @BindView(R.id.contact_adapter_send_message)
+        public View sendMessageButton;
+
+        public ViewHolder(View view) {
+            super(view);
+            ButterKnife.bind(this, view);
+        }
     }
 }
