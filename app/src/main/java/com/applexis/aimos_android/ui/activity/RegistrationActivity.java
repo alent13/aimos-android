@@ -1,7 +1,10 @@
 package com.applexis.aimos_android.ui.activity;
 
+import android.Manifest;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.EditText;
@@ -10,9 +13,9 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.applexis.aimos_android.R;
+import com.applexis.aimos_android.network.AimosAPI;
+import com.applexis.aimos_android.network.AimosAPIClient;
 import com.applexis.aimos_android.network.KeyExchangeAPI;
-import com.applexis.aimos_android.network.MessengerAPI;
-import com.applexis.aimos_android.network.MessengerAPIClient;
 import com.applexis.aimos_android.network.model.LoginResponse;
 import com.applexis.aimos_android.utils.SharedPreferencesHelper;
 import com.applexis.utils.crypto.AESCrypto;
@@ -25,6 +28,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class RegistrationActivity extends AppCompatActivity implements KeyExchangeAPI.KeyExchangeListener {
+
+    public static final int PERMISSION_REQUEST_CODE = 200;
 
     @BindView(R.id.registration_extra_layout)
     LinearLayout extraInfoLayout;
@@ -48,7 +53,7 @@ public class RegistrationActivity extends AppCompatActivity implements KeyExchan
     private boolean isExtraShowed = false;
     private boolean registrationWaitForKeyExchange = false;
 
-    private MessengerAPI messengerAPI;
+    private AimosAPI aimosAPI;
     private KeyExchangeAPI keyExchange;
 
     @Override
@@ -56,7 +61,7 @@ public class RegistrationActivity extends AppCompatActivity implements KeyExchan
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_registration);
         ButterKnife.bind(this);
-        messengerAPI = MessengerAPIClient.getClient().create(MessengerAPI.class);
+        aimosAPI = AimosAPIClient.getClient().create(AimosAPI.class);
         keyExchange = new KeyExchangeAPI();
         keyExchange.setKeyExchangeListener(this);
     }
@@ -97,7 +102,7 @@ public class RegistrationActivity extends AppCompatActivity implements KeyExchan
             String ePhone = aes.encrypt(phone);
             String eAbout = aes.encrypt(about);
 
-            Call<LoginResponse> registrateRequest = messengerAPI.registration(
+            Call<LoginResponse> registrateRequest = aimosAPI.registration(
                     eLogin, ePassword, eName,
                     eSurname, eEmail, ePhone,
                     eAbout, rsaPublic
@@ -111,6 +116,7 @@ public class RegistrationActivity extends AppCompatActivity implements KeyExchan
                         SharedPreferencesHelper.setName(response.body().getUserMinimalInfo().getName(aes));
                         SharedPreferencesHelper.setSurname(response.body().getUserMinimalInfo().getSurname(aes));
                         SharedPreferencesHelper.setToken(response.body().getToken(aes));
+                        requestMultiplePermissions();
                         startActivity(new Intent(RegistrationActivity.this, MainActivity.class));
                         finish();
                     } else {
@@ -135,6 +141,23 @@ public class RegistrationActivity extends AppCompatActivity implements KeyExchan
             registrationWaitForKeyExchange = true;
             keyExchange.updateKeys();
         }
+    }
+
+    public void requestMultiplePermissions() {
+        ActivityCompat.requestPermissions(this,
+                new String[]{
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                },
+                PERMISSION_REQUEST_CODE);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode != PERMISSION_REQUEST_CODE) {
+            requestMultiplePermissions();
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     @Override

@@ -11,7 +11,8 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/colorPrimary"
-        app:popupTheme="@style/Theme.AppCompat.Light.NoActionBar"/>
+        app:popupTheme="@style/Theme.AppCompat.Light.NoActionBar"
+        app:maxButtonHeight="40dp"/>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/fragment_storage_recycler"
@@ -49,5 +50,18 @@
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"/>
     </RelativeLayout>
+
+    <io.github.yavski.fabspeeddial.FabSpeedDial
+        android:id="@+id/fragment_storage_fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        app:fabGravity="bottom_end"
+        app:fabMenu="@menu/menu_storage_add_actions"
+        app:miniFabDrawableTint="@color/white"
+        app:miniFabBackgroundTintList="@array/fab_menu_item_colors"
+        app:miniFabTitleTextColorList="@array/fab_menu_item_colors"/>
 
 </RelativeLayout>

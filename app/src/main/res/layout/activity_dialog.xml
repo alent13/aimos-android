@@ -10,20 +10,29 @@
     <android.support.v7.widget.Toolbar
         android:id="@+id/message_toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="?attr/actionBarSize"
         android:background="@color/colorPrimary">
 
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginLeft="16dp"
             android:layout_marginRight="16dp">
+
+            <ImageView
+                android:id="@+id/message_back"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_arrow_back"
+                android:tint="@color/white"/>
 
             <TextView
                 android:id="@+id/message_dialog_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
+                android:layout_toRightOf="@+id/message_back"
+                android:layout_marginLeft="8dp"
                 android:layout_centerVertical="true"
                 android:fontFamily="sans-serif-light"
                 android:text="Dialog Name"
@@ -45,10 +54,10 @@
                 android:id="@+id/message_invite"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:layout_alignParentRight="true"
                 android:layout_centerVertical="true"
-                android:layout_marginRight="48dp"
+                android:layout_toLeftOf="@+id/message_update_list"
                 android:background="@drawable/bg_ui_rounded"
+                android:layout_marginRight="8dp"
                 android:padding="4dp"
                 android:src="@drawable/ic_add_one"
                 android:tint="@color/white"/>

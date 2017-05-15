@@ -5,15 +5,52 @@
         android:id="@+id/menu_storage_sync_action"
         android:icon="@drawable/ic_status_sync"
         android:title="@string/sync"
-        app:showAsAction="always"/>
+        app:showAsAction="always" />
+
+    <group android:id="@+id/menu_storage_select_group">
+        <item
+            android:id="@+id/menu_storage_copy_action"
+            android:icon="@drawable/ic_copy"
+            android:title="@string/copy"
+            app:showAsAction="always" />
+        <item
+            android:id="@+id/menu_storage_del_action"
+            android:icon="@drawable/ic_del"
+            android:title="@string/del"
+            app:showAsAction="always" />
+        <item
+            android:id="@+id/menu_storage_move_action"
+            android:icon="@drawable/ic_cut"
+            android:title="@string/move"
+            app:showAsAction="always" />
+        <item
+            android:id="@+id/menu_storage_select_all_action"
+            android:icon="@drawable/ic_select_all"
+            android:title="@string/move"
+            app:showAsAction="always" />
+    </group>
+
+    <item
+        android:id="@+id/menu_storage_properties_action"
+        android:icon="@drawable/ic_properties"
+        android:title="@string/properties"
+        app:showAsAction="ifRoom" />
+
     <item
         android:id="@+id/menu_storage_sort_action"
         android:icon="@drawable/ic_sort"
         android:title="@string/sort"
-        app:showAsAction="never"/>
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/menu_storage_folder_first_action"
+        android:checkable="true"
+        android:title="@string/folderFirst"
+        app:showAsAction="never" />
+
     <item
         android:id="@+id/menu_storage_settings_action"
         android:icon="@drawable/ic_settings"
         android:title="@string/settings"
-        app:showAsAction="never"/>
+        app:showAsAction="never" />
 </menu>

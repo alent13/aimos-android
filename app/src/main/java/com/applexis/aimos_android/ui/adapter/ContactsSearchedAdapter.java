@@ -10,8 +10,8 @@ import android.widget.Toast;
 
 import com.applexis.aimos_android.R;
 import com.applexis.aimos_android.network.KeyExchangeAPI;
-import com.applexis.aimos_android.network.MessengerAPI;
-import com.applexis.aimos_android.network.MessengerAPIClient;
+import com.applexis.aimos_android.network.AimosAPI;
+import com.applexis.aimos_android.network.AimosAPIClient;
 import com.applexis.aimos_android.network.model.AddContactResponse;
 import com.applexis.aimos_android.network.model.LoginResponse;
 import com.applexis.aimos_android.network.model.UserMinimalInfo;
@@ -37,7 +37,7 @@ public class ContactsSearchedAdapter extends RecyclerView.Adapter<ContactsSearch
     private Context ctx;
     private LayoutInflater lInflater;
 
-    private static MessengerAPI messengerAPI = MessengerAPIClient.getClient().create(MessengerAPI.class);
+    private static AimosAPI aimosAPI = AimosAPIClient.getClient().create(AimosAPI.class);
     private KeyExchangeAPI keyExchange;
 
     private boolean createDialogWaitForKeyExchange = false;
@@ -104,7 +104,7 @@ public class ContactsSearchedAdapter extends RecyclerView.Adapter<ContactsSearch
             String token = SharedPreferencesHelper.getToken();
             String eToken = aes.encrypt(token);
             String eIdUser = aes.encrypt(Long.toString(id));
-            final Call<AddContactResponse> addContactRequest = messengerAPI.addContact(eIdUser, eToken, rsaPublic);
+            final Call<AddContactResponse> addContactRequest = aimosAPI.addContact(eIdUser, eToken, rsaPublic);
             sendAddContactRequest(addContactRequest);
         } else if (aesKeyString.equals("")) {
             addContactWaitForKeyExchange = true;

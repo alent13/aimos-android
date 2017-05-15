@@ -11,8 +11,8 @@ import android.widget.Toast;
 
 import com.applexis.aimos_android.R;
 import com.applexis.aimos_android.network.KeyExchangeAPI;
-import com.applexis.aimos_android.network.MessengerAPI;
-import com.applexis.aimos_android.network.MessengerAPIClient;
+import com.applexis.aimos_android.network.AimosAPI;
+import com.applexis.aimos_android.network.AimosAPIClient;
 import com.applexis.aimos_android.network.model.DialogResponse;
 import com.applexis.aimos_android.network.model.LoginResponse;
 import com.applexis.aimos_android.network.model.UserMinimalInfo;
@@ -39,7 +39,7 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHo
     private Context ctx;
     private LayoutInflater lInflater;
 
-    private static MessengerAPI messengerAPI = MessengerAPIClient.getClient().create(MessengerAPI.class);
+    private static AimosAPI aimosAPI = AimosAPIClient.getClient().create(AimosAPI.class);
     private KeyExchangeAPI keyExchange;
 
     private boolean createDialogWaitForKeyExchange = false;
@@ -96,7 +96,7 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHo
             String token = SharedPreferencesHelper.getToken();
             String eToken = aes.encrypt(token);
             String eIdUser = aes.encrypt(Long.toString(id));
-            final Call<DialogResponse> createDialogRequest = messengerAPI.createDialog(eIdUser, eToken, rsaPublic);
+            final Call<DialogResponse> createDialogRequest = aimosAPI.createDialog(eIdUser, eToken, rsaPublic);
             sendCreateDialogRequest(createDialogRequest);
         } else {
             createDialogWaitForKeyExchange = true;

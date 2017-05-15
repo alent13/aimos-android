@@ -16,8 +16,8 @@ import android.widget.Toast;
 
 import com.applexis.aimos_android.R;
 import com.applexis.aimos_android.network.KeyExchangeAPI;
-import com.applexis.aimos_android.network.MessengerAPI;
-import com.applexis.aimos_android.network.MessengerAPIClient;
+import com.applexis.aimos_android.network.AimosAPI;
+import com.applexis.aimos_android.network.AimosAPIClient;
 import com.applexis.aimos_android.network.model.DialogListResponse;
 import com.applexis.aimos_android.network.model.DialogMinimal;
 import com.applexis.aimos_android.ui.adapter.DialogsAdapter;
@@ -36,7 +36,7 @@ import retrofit2.Response;
 
 public class DialogsFragment extends Fragment implements KeyExchangeAPI.KeyExchangeListener {
 
-    private static MessengerAPI messengerAPI = MessengerAPIClient.getClient().create(MessengerAPI.class);
+    private static AimosAPI aimosAPI = AimosAPIClient.getClient().create(AimosAPI.class);
     private KeyExchangeAPI keyExchange;
     @BindView(R.id.dialogs_loading)
     public LinearLayout dialogsLoading;
@@ -89,7 +89,7 @@ public class DialogsFragment extends Fragment implements KeyExchangeAPI.KeyExcha
         String desKeyString = SharedPreferencesHelper.getGlobalAesKey();
         final AESCrypto aes = new AESCrypto(desKeyString);
         String eToken = aes.encrypt(token);
-        final Call<DialogListResponse> request = messengerAPI.getDialogs(eToken, SharedPreferencesHelper.getGlobalPublicKey());
+        final Call<DialogListResponse> request = aimosAPI.getDialogs(eToken, SharedPreferencesHelper.getGlobalPublicKey());
         request.enqueue(new Callback<DialogListResponse>() {
             @Override
             public void onResponse(Call<DialogListResponse> call, Response<DialogListResponse> response) {

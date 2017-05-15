@@ -16,8 +16,8 @@ import com.applexis.aimos_android.network.model.MessageMinimal;
 import com.applexis.aimos_android.ui.adapter.DialogsAdapter;
 import com.applexis.aimos_android.ui.adapter.MessageAdapter;
 import com.applexis.aimos_android.network.KeyExchangeAPI;
-import com.applexis.aimos_android.network.MessengerAPI;
-import com.applexis.aimos_android.network.MessengerAPIClient;
+import com.applexis.aimos_android.network.AimosAPI;
+import com.applexis.aimos_android.network.AimosAPIClient;
 import com.applexis.aimos_android.network.model.DialogListResponse;
 import com.applexis.aimos_android.network.model.DialogMinimal;
 import com.applexis.aimos_android.network.model.GetMessageResponse;
@@ -48,7 +48,7 @@ public class DialogActivity extends AppCompatActivity implements KeyExchangeAPI.
     @BindView(R.id.message_dialog_name)
     public TextView mDialogName;
 
-    private MessengerAPI messengerAPI;
+    private AimosAPI aimosAPI;
     private KeyExchangeAPI keyExchange;
 
     private MessageAdapter mAdapter;
@@ -66,7 +66,7 @@ public class DialogActivity extends AppCompatActivity implements KeyExchangeAPI.
 
         dialogInfo = getIntent().getParcelableExtra(DialogsAdapter.DIALOG);
 
-        messengerAPI = MessengerAPIClient.getClient().create(MessengerAPI.class);
+        aimosAPI = AimosAPIClient.getClient().create(AimosAPI.class);
         keyExchange = new KeyExchangeAPI();
         keyExchange.setKeyExchangeListener(this);
 
@@ -80,6 +80,11 @@ public class DialogActivity extends AppCompatActivity implements KeyExchangeAPI.
 
         mDialogName.setText(dialogInfo.getName(aes));
         getMessages();
+    }
+
+    @OnClick(R.id.message_back)
+    public void backClick(View view) {
+        finish();
     }
 
     @OnClick(R.id.message_update_list)
@@ -100,7 +105,7 @@ public class DialogActivity extends AppCompatActivity implements KeyExchangeAPI.
         String eCount = aes.encrypt(Long.toString(10));
         String eOffset = aes.encrypt(Long.toString(0));
         String eIdDialog = aes.encrypt(Long.toString(dialogInfo.getId(aes)));
-        final Call<GetMessageResponse> request = messengerAPI.getLastMessages(eCount, eOffset, eIdDialog, eToken, SharedPreferencesHelper.getGlobalPublicKey());
+        final Call<GetMessageResponse> request = aimosAPI.getLastMessages(eCount, eOffset, eIdDialog, eToken, SharedPreferencesHelper.getGlobalPublicKey());
         request.enqueue(new Callback<GetMessageResponse>() {
             @Override
             public void onResponse(Call<GetMessageResponse> call, Response<GetMessageResponse> response) {
@@ -143,7 +148,7 @@ public class DialogActivity extends AppCompatActivity implements KeyExchangeAPI.
             String eMessage = aesMessage.encrypt(message);
             String eKey = aes.encrypt(aesMessage.getKeyString());
             String eEds = Base64.encodeToString(DSASign.generateSignature(keyPair.getPrivate(), eMessage.getBytes()), Base64.DEFAULT);
-            final Call<MessageSendResponse> request = messengerAPI.sendMessageEncrypted(eMessage, eKey, eEds, eEdsPublicKey, eIdDialog, eToken, SharedPreferencesHelper.getGlobalPublicKey());
+            final Call<MessageSendResponse> request = aimosAPI.sendMessageEncrypted(eMessage, eKey, eEds, eEdsPublicKey, eIdDialog, eToken, SharedPreferencesHelper.getGlobalPublicKey());
             request.enqueue(new Callback<MessageSendResponse>() {
                 @Override
                 public void onResponse(Call<MessageSendResponse> call, Response<MessageSendResponse> response) {

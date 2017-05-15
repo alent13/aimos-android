@@ -26,10 +26,10 @@ public class KeyExchangeAPI {
     }
 
     public void updateKeys() {
-        MessengerAPI messengerAPI = MessengerAPIClient.getClient().create(MessengerAPI.class);
+        AimosAPI aimosAPI = AimosAPIClient.getClient().create(AimosAPI.class);
         final KeyPair RSAKey = RSACrypto.generateKeyPair();
         final String pKey = RSACrypto.getPublicKeyString(RSAKey.getPublic());
-        final Call<String> request = messengerAPI.keyExchange(pKey);
+        final Call<String> request = aimosAPI.keyExchange(pKey);
         request.enqueue(new Callback<String>() {
             @Override
             public void onResponse(Call<String> call, Response<String> response) {

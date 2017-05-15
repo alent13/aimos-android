@@ -28,6 +28,7 @@
     <string name="properties">Properties</string>
     <string name="settings">Settings</string>
     <string name="sort">Sort</string>
+    <string name="folderFirst">Folder first</string>
 
     <string name="home">Home</string>
     <string name="contacts">Contacts</string>
@@ -44,6 +45,8 @@
     <string name="contactLoadErrorText">Contact load error</string>
     <string name="contactLoadText">Loading contacts</string>
     <string name="dialogLoadText">Loading dialogs</string>
-    <string name="dialogLastMessageNameText">%s:</string>
+    <string name="dialogLastMessageNameText" translatable="false">%s:</string>
     <string name="dialogLastMyMessageText">You:</string>
+    <string name="file">File</string>
+    <string name="folder">Folder</string>
 </resources>

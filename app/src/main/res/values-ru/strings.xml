@@ -42,5 +42,8 @@
     <string name="dialogLoadText">Загрузка списка диалогов...</string>
     <string name="synchronizationText">Синхронизация</string>
     <string name="dialogLastMyMessageText">"Я: "</string>
+    <string name="folderFirst">Сначала папки</string>
+    <string name="file">Файл</string>
+    <string name="folder">Папка</string>
 
 </resources>

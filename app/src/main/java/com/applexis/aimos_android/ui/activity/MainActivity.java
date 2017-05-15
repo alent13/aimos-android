@@ -6,8 +6,8 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 
 import com.applexis.aimos_android.R;
-import com.applexis.aimos_android.network.MessengerAPI;
-import com.applexis.aimos_android.network.MessengerAPIClient;
+import com.applexis.aimos_android.network.AimosAPI;
+import com.applexis.aimos_android.network.AimosAPIClient;
 import com.applexis.aimos_android.ui.adapter.MainViewPagerAdapter;
 
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ import devlight.io.library.ntb.NavigationTabBar;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static MessengerAPI messengerAPI = MessengerAPIClient.getClient().create(MessengerAPI.class);
+    private static AimosAPI aimosAPI = AimosAPIClient.getClient().create(AimosAPI.class);
     @BindView(R.id.main_viewpager)
     ViewPager viewPager;
 

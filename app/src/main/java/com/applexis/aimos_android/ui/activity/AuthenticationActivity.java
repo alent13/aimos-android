@@ -1,9 +1,12 @@
 package com.applexis.aimos_android.ui.activity;
 
+import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputEditText;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.method.PasswordTransformationMethod;
 import android.view.View;
@@ -11,9 +14,9 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.applexis.aimos_android.R;
+import com.applexis.aimos_android.network.AimosAPI;
+import com.applexis.aimos_android.network.AimosAPIClient;
 import com.applexis.aimos_android.network.KeyExchangeAPI;
-import com.applexis.aimos_android.network.MessengerAPI;
-import com.applexis.aimos_android.network.MessengerAPIClient;
 import com.applexis.aimos_android.network.model.LoginResponse;
 import com.applexis.aimos_android.utils.SharedPreferencesHelper;
 import com.applexis.utils.crypto.AESCrypto;
@@ -27,6 +30,8 @@ import retrofit2.Response;
 
 public class AuthenticationActivity extends AppCompatActivity implements KeyExchangeAPI.KeyExchangeListener {
 
+    public static final int PERMISSION_REQUEST_CODE = 200;
+
     @BindView(R.id.auth_login)
     EditText loginText;
     @BindView(R.id.auth_password)
@@ -36,7 +41,7 @@ public class AuthenticationActivity extends AppCompatActivity implements KeyExch
     @BindView(R.id.auth_login_btn)
     View loginButton;
 
-    private MessengerAPI messengerAPI;
+    private AimosAPI aimosAPI;
     private KeyExchangeAPI keyExchange;
 
     private ProgressDialog progressDialog;
@@ -50,7 +55,7 @@ public class AuthenticationActivity extends AppCompatActivity implements KeyExch
         setContentView(R.layout.activity_authentication);
         ButterKnife.bind(this);
         SharedPreferencesHelper.initialize(this);
-        messengerAPI = MessengerAPIClient.getClient().create(MessengerAPI.class);
+        aimosAPI = AimosAPIClient.getClient().create(AimosAPI.class);
         keyExchange = new KeyExchangeAPI();
         keyExchange.setKeyExchangeListener(this);
 
@@ -90,7 +95,7 @@ public class AuthenticationActivity extends AppCompatActivity implements KeyExch
             AESCrypto aes = new AESCrypto(aesKeyString);
             String token = SharedPreferencesHelper.getToken();
             String eToken = aes.encrypt(token);
-            final Call<LoginResponse> ckeckTokenRequest = messengerAPI.checkToken(eToken, rsaPublic);
+            final Call<LoginResponse> ckeckTokenRequest = aimosAPI.checkToken(eToken, rsaPublic);
             sendCheckTokenRequest(ckeckTokenRequest);
         } else if (aesKeyString.equals("")) {
             checkTokenWaitForKeys = true;
@@ -109,6 +114,7 @@ public class AuthenticationActivity extends AppCompatActivity implements KeyExch
                     SharedPreferencesHelper.setName(response.body().getUserMinimalInfo().getName(aes));
                     SharedPreferencesHelper.setSurname(response.body().getUserMinimalInfo().getSurname(aes));
                     SharedPreferencesHelper.setToken(response.body().getToken(aes));
+                    requestMultiplePermissions();
                     startActivity(new Intent(AuthenticationActivity.this, MainActivity.class));
                     progressDialog.hide();
                     finish();
@@ -148,7 +154,7 @@ public class AuthenticationActivity extends AppCompatActivity implements KeyExch
             AESCrypto aes = new AESCrypto(desKeyString);
             String eLogin = aes.encrypt(loginText.getText().toString());
             String ePassword = aes.encrypt(passwordText.getText().toString());
-            final Call<LoginResponse> loginRequest = messengerAPI.login(eLogin, ePassword, rsaPublic);
+            final Call<LoginResponse> loginRequest = aimosAPI.login(eLogin, ePassword, rsaPublic);
             loadIndicator.setVisibility(View.VISIBLE);
             loginButton.setVisibility(View.GONE);
             sendLoginRequest(loginRequest);
@@ -169,6 +175,7 @@ public class AuthenticationActivity extends AppCompatActivity implements KeyExch
                     SharedPreferencesHelper.setName(response.body().getUserMinimalInfo().getName(aes));
                     SharedPreferencesHelper.setSurname(response.body().getUserMinimalInfo().getSurname(aes));
                     SharedPreferencesHelper.setToken(response.body().getToken(aes));
+                    requestMultiplePermissions();
                     startActivity(new Intent(AuthenticationActivity.this, MainActivity.class));
                     finish();
                 } else {
@@ -195,6 +202,23 @@ public class AuthenticationActivity extends AppCompatActivity implements KeyExch
                 loginButton.setVisibility(View.VISIBLE);
             }
         });
+    }
+
+    public void requestMultiplePermissions() {
+        ActivityCompat.requestPermissions(this,
+                new String[]{
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                },
+                PERMISSION_REQUEST_CODE);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode != PERMISSION_REQUEST_CODE) {
+            requestMultiplePermissions();
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     @Override

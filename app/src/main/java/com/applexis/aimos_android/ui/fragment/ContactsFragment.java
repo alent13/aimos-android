@@ -18,8 +18,8 @@ import android.widget.Toast;
 
 import com.applexis.aimos_android.R;
 import com.applexis.aimos_android.network.KeyExchangeAPI;
-import com.applexis.aimos_android.network.MessengerAPI;
-import com.applexis.aimos_android.network.MessengerAPIClient;
+import com.applexis.aimos_android.network.AimosAPI;
+import com.applexis.aimos_android.network.AimosAPIClient;
 import com.applexis.aimos_android.network.model.ContactResponse;
 import com.applexis.aimos_android.network.model.LoginResponse;
 import com.applexis.aimos_android.network.model.UserMinimalInfo;
@@ -41,7 +41,7 @@ import retrofit2.Response;
 
 public class ContactsFragment extends Fragment implements KeyExchangeAPI.KeyExchangeListener, ContactsSearchedAdapter.ContactAddListener {
 
-    private static MessengerAPI messengerAPI = MessengerAPIClient.getClient().create(MessengerAPI.class);
+    private static AimosAPI aimosAPI = AimosAPIClient.getClient().create(AimosAPI.class);
     private KeyExchangeAPI keyExchange;
 
     @BindView(R.id.contacts_loading)
@@ -132,7 +132,7 @@ public class ContactsFragment extends Fragment implements KeyExchangeAPI.KeyExch
             String token = SharedPreferencesHelper.getToken();
             String eToken = aes.encrypt(token);
             String eLoginPart = aes.encrypt(loginPart);
-            final Call<ContactResponse> contactSearchedRequest = messengerAPI.findContact(eLoginPart, eToken, rsaPublic);
+            final Call<ContactResponse> contactSearchedRequest = aimosAPI.findContact(eLoginPart, eToken, rsaPublic);
             sendFindContactsRequest(contactSearchedRequest);
         } else if (desKeyString.equals("")) {
             findContactsWaitForKeyExchange = true;
@@ -181,7 +181,7 @@ public class ContactsFragment extends Fragment implements KeyExchangeAPI.KeyExch
         String desKeyString = SharedPreferencesHelper.getGlobalAesKey();
         final AESCrypto aes = new AESCrypto(desKeyString);
         String eToken = aes.encrypt(token);
-        final Call<ContactResponse> request = messengerAPI.getContacts(eToken, SharedPreferencesHelper.getGlobalPublicKey());
+        final Call<ContactResponse> request = aimosAPI.getContacts(eToken, SharedPreferencesHelper.getGlobalPublicKey());
         request.enqueue(new Callback<ContactResponse>() {
             @Override
             public void onResponse(Call<ContactResponse> call, Response<ContactResponse> response) {

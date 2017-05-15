@@ -5,6 +5,7 @@
     <color name="colorAccent">#4CAF50</color>-->
     <color name="colorPrimary">#3498db</color>
     <color name="colorPrimaryDark">#2980b9</color>
+    <color name="colorPrimaryLight">#90caf9</color>
     <color name="colorAccent">#ffc400</color>
     <color name="white">#FFF</color>
     <color name="black">#000</color>
@@ -17,10 +18,12 @@
     <color name="transparent_white">#77FFFFFF</color>
     <color name="transparent_white_full">#33FFFFFF</color>
     <color name="light_gray">#999999</color>
+    <color name="white_pressed">#f1f1f1</color>
+    <color name="half_black">#808080</color>
+    <color name="black_semi_transparent">#B2000000</color>
 
-    <color name="barColor1">#4dd0e1</color>
-    <color name="barColor2">#ba68c8</color>
-    <color name="barColor3">#ffb74d</color>
-    <color name="barColor4">#81c784</color>
-    <color name="barColor5">#ef5350</color>
+    <integer-array name="fab_menu_item_colors">
+        <item>@android:color/holo_purple</item>
+        <item>@android:color/holo_green_light</item>
+    </integer-array>
 </resources>
