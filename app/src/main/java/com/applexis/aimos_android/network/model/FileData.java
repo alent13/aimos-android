@@ -2,10 +2,12 @@ package com.applexis.aimos_android.network.model;
 
 
 import com.applexis.utils.crypto.AESCrypto;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.io.File;
 import java.util.Date;
 
+@JsonSerialize
 public class FileData {
 
     public static final String OK = "OK";
@@ -31,14 +33,42 @@ public class FileData {
     public FileData() {
     }
 
+    public FileData(AESCrypto aes) {
+        this.id = aes.encrypt(String.valueOf(-1));
+        this.name = aes.encrypt("");
+        this.path = aes.encrypt("");
+        this.isFolder = aes.encrypt(String.valueOf(false));
+        this.parentId = aes.encrypt(String.valueOf(-1));
+        this.treeParent = aes.encrypt(String.valueOf(-1));
+        this.createDatetime = aes.encrypt(String.valueOf(-1));
+        this.lastModificationDatetime = aes.encrypt(String.valueOf(-1));
+        this.size = aes.encrypt(String.valueOf(-1));
+        this.isPublic = aes.encrypt(String.valueOf(false));
+        this.status = aes.encrypt(String.valueOf(""));
+        this.hash = aes.encrypt(String.valueOf(""));
+    }
+
     public FileData(File file, int treeParent, String hash, AESCrypto aes) {
         this.name = aes.encrypt(file.getName());
         this.isFolder = aes.encrypt(String.valueOf(file.isDirectory()));
         this.treeParent = aes.encrypt(String.valueOf(treeParent));
+        String absolutePath = file.getAbsolutePath();
+        this.path = aes.encrypt(absolutePath.substring(0, absolutePath.lastIndexOf(File.separator)));
         this.createDatetime = aes.encrypt(String.valueOf(0));
         this.lastModificationDatetime = aes.encrypt(String.valueOf(file.lastModified()));
         this.size = aes.encrypt(String.valueOf(file.length()));
         this.hash = aes.encrypt(hash);
+    }
+
+    public FileData(File file, int treeParent, AESCrypto aes) {
+        this.name = aes.encrypt(file.getName());
+        this.isFolder = aes.encrypt(String.valueOf(file.isDirectory()));
+        this.treeParent = aes.encrypt(String.valueOf(treeParent));
+        String absolutePath = file.getAbsolutePath();
+        this.path = aes.encrypt(absolutePath.substring(0, absolutePath.lastIndexOf(File.separator)));
+        this.createDatetime = aes.encrypt(String.valueOf(0));
+        this.lastModificationDatetime = aes.encrypt(String.valueOf(file.lastModified()));
+        this.size = aes.encrypt(String.valueOf(file.length()));
     }
 
     public FileData(String id, String name, String isFolder, String parentId,
@@ -134,7 +164,7 @@ public class FileData {
         this.path = aes.encrypt(path);
     }
 
-    public boolean isFolder(AESCrypto aes) {
+    public boolean getIsFolder(AESCrypto aes) {
         return Boolean.valueOf(aes.decrypt(isFolder));
     }
 
@@ -182,7 +212,7 @@ public class FileData {
         this.size = aes.encrypt(String.valueOf(size));
     }
 
-    public boolean isPublic(AESCrypto aes) {
+    public boolean getIsPublic(AESCrypto aes) {
         return Boolean.valueOf(aes.decrypt(isPublic));
     }
 
@@ -218,6 +248,10 @@ public class FileData {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public String getPath() {
         return path;
     }
@@ -226,11 +260,7 @@ public class FileData {
         this.path = path;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String isFolder() {
+    public String getIsFolder() {
         return isFolder;
     }
 
@@ -278,7 +308,7 @@ public class FileData {
         this.size = size;
     }
 
-    public String isPublic() {
+    public String getIsPublic() {
         return isPublic;
     }
 
@@ -301,5 +331,4 @@ public class FileData {
     public void setHash(String hash) {
         this.hash = hash;
     }
-
 }

@@ -3,7 +3,9 @@ package com.applexis.aimos_android.network;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
@@ -14,7 +16,10 @@ import com.applexis.aimos_android.network.model.GetFileKeyResponse;
 import com.applexis.aimos_android.network.model.SyncResponse;
 import com.applexis.aimos_android.utils.SharedPreferencesHelper;
 import com.applexis.utils.HashHelper;
+import com.applexis.utils.StringUtils;
 import com.applexis.utils.crypto.AESCrypto;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,10 +28,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import okhttp3.MediaType;
-import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -66,33 +71,58 @@ public class StorageAPI implements KeyExchangeAPI.KeyExchangeListener {
         final AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
 
         List<FileData> result = new ArrayList<>();
+        result.add(new FileData(aes));
         getFolderHash(result, 0, getUserRootDirectory(), aes);
-        FileData[] fileDataArray = new FileData[result.size()];
-        Call<SyncResponse> request = aimosAPI.storageSync(result.toArray(fileDataArray),
+
+        ObjectMapper mapper = new ObjectMapper();
+        String dataString = null;
+        try {
+            dataString = mapper.writeValueAsString(result).replace("{", "%7B").replace("}", "%7D");
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        Call<SyncResponse> request = aimosAPI.storageSync(dataString,
                 aes.encrypt(SharedPreferencesHelper.getToken()), SharedPreferencesHelper.getGlobalPublicKey());
         otherSyncStart = true;
         request.enqueue(new Callback<SyncResponse>() {
             @Override
             public void onResponse(Call<SyncResponse> call, Response<SyncResponse> response) {
                 if (response.body() != null) {
-                    if (response.body().check(aes)) {
+                    if (response.body().check(aes) && response.body().getFileDataList() != null) {
+                        lastSyncFileData = response.body().getFileDataList();
+                        lastSyncFileData.forEach(fileData -> {
+                            if (fileData.getIsFolder(aes)) {
+                                fileData.setStatus(FileData.OK, aes);
+                            }
+                        });
                         if (onStorageAPIListener != null) {
-                            onStorageAPIListener.onSyncComplete(response.body().getFileDataList());
-                            lastSyncFileData = response.body().getFileDataList();
-                            Stream.of(lastSyncFileData)
-                                    .filter(value -> !value.isFolder(aes) &&
-                                            (value.getStatus(aes).equals(FileData.UPLOAD) ||
-                                                    value.getStatus(aes).equals(FileData.DOWNLOAD)))
-                                    .collect(Collectors.toList());
-                            syncNext();
+                            onStorageAPIListener.onSyncComplete(lastSyncFileData);
                         }
+                        List<FileData> syncedFolders = Stream.of(lastSyncFileData)
+                                .filter(value -> value.getIsFolder(aes))
+                                .collect(Collectors.toList());
+                        createSyncedFolders(syncedFolders, 0L, getUserRootDirectory(), aes);
+                        lastSyncFileData = Stream.of(lastSyncFileData)
+                                .filter(value -> !value.getIsFolder(aes) &&
+                                        (value.getStatus(aes).equals(FileData.UPLOAD) ||
+                                                value.getStatus(aes).equals(FileData.DOWNLOAD)))
+                                .collect(Collectors.toList());
+                        otherSyncStart = false;
+                        syncNext();
                     } else {
                         Log.d(TAG, "Sync Error: " + response.body().getErrorType(aes));
                         if (response.body().getErrorType().equals(SyncResponse.ErrorType.BAD_PUBLIC_KEY.name())) {
                             syncWaitForKeyExchange = true;
                             keyExchange.updateKeys();
                         }
+                        otherSyncStart = false;
                     }
+                } else {
+                    if (onStorageAPIListener != null) {
+                        onStorageAPIListener.onSyncFailure();
+                    }
+                    otherSyncStart = false;
                 }
             }
 
@@ -102,7 +132,19 @@ public class StorageAPI implements KeyExchangeAPI.KeyExchangeListener {
                 if (onStorageAPIListener != null) {
                     onStorageAPIListener.onSyncFailure();
                 }
+                otherSyncStart = false;
             }
+        });
+    }
+
+    public void createSyncedFolders(List<FileData> fdList, Long level, String levelPath, AESCrypto aes) {
+        List<FileData> cLevelFolderList = Stream.of(fdList)
+                .filter(value -> value.getParentId(aes).equals(level))
+                .collect(Collectors.toList());
+        cLevelFolderList.forEach(fileData -> {
+            String fdLevelPath = levelPath + fileData.getName(aes) + File.separator;
+            new File(fdLevelPath).mkdirs();
+            createSyncedFolders(fdList, fileData.getId(aes), fdLevelPath, aes);
         });
     }
 
@@ -132,13 +174,17 @@ public class StorageAPI implements KeyExchangeAPI.KeyExchangeListener {
             String fullPath = getUserRootDirectory() + fData.getPath(aes) + File.separator + fData.getName(aes);
             File uploadFile = new File(fullPath);
             if (uploadFile != null) {
-                tryEncrypt(aes, aesFileCrypto, fData, uploadFile);
+                tryEncrypt(aes, aesFileCrypto, uploadFile);
                 Uri fileUri = Uri.fromFile(lastCacheFile);
-                RequestBody requestFile = RequestBody.create(
+
+                RequestBody requestFile = RequestBody.create(MediaType.parse("multipart/form-data"), getFileString(lastCacheFile));
+
+                /*RequestBody requestFile = RequestBody.create(
                         MediaType.parse(context.getContentResolver().getType(fileUri)), lastCacheFile);
                 MultipartBody.Part body =
-                        MultipartBody.Part.createFormData("encryptedFile", fData.getName(aes), requestFile);
-                Call<FileUploadResponse> request = aimosAPI.syncUpload(body, fData, fData.getPath(),
+                        MultipartBody.Part.createFormData("encryptedFile", fData.getName(aes), requestFile);*/
+
+                Call<FileUploadResponse> request = aimosAPI.syncUpload(requestFile, fData, fData.getPath(),
                         aes.encrypt(aesFileCrypto.getKeyString()), aes.encrypt(SharedPreferencesHelper.getToken()),
                         SharedPreferencesHelper.getGlobalPublicKey());
                 if (onStorageAPIListener != null) {
@@ -153,7 +199,6 @@ public class StorageAPI implements KeyExchangeAPI.KeyExchangeListener {
                                     if (onStorageAPIListener != null) {
                                         onStorageAPIListener.onFileUploadEnd(lastSyncFileData.get(0).getName(aes), false);
                                     }
-                                    lastCacheFile.delete();
                                     lastSyncFileData.remove(0);
                                     syncNext();
                                 }
@@ -165,10 +210,12 @@ public class StorageAPI implements KeyExchangeAPI.KeyExchangeListener {
                                 }
                             }
                         }
+                        lastCacheFile.delete();
                     }
 
                     @Override
                     public void onFailure(Call<FileUploadResponse> call, Throwable t) {
+                        lastCacheFile.delete();
                         t.printStackTrace();
                         if (onStorageAPIListener != null) {
                             if (lastSyncFileData.size() > 0) {
@@ -183,9 +230,9 @@ public class StorageAPI implements KeyExchangeAPI.KeyExchangeListener {
         }
     }
 
-    private void tryEncrypt(AESCrypto aes, AESCrypto aesFileCrypto, FileData fData, File uploadFile) {
+    private void tryEncrypt(AESCrypto aes, AESCrypto aesFileCrypto, File uploadFile) {
         try {
-            lastCacheFile = File.createTempFile(fData.getName(aes), null, context.getCacheDir());
+            lastCacheFile = File.createTempFile(uploadFile.getName(), null, context.getCacheDir());
             FileOutputStream fileOutputStream = new FileOutputStream(lastCacheFile);
             byte[] fileData = new byte[(int) uploadFile.length()];
             FileInputStream inputStream = new FileInputStream(uploadFile);
@@ -345,20 +392,72 @@ public class StorageAPI implements KeyExchangeAPI.KeyExchangeListener {
         final AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
         AimosAPI aimosAPI = AimosAPIClient.getClient().create(AimosAPI.class);
 
-        if (lastSyncFileData.size() > 0) {
-            Call<FolderCreateResponse> request = aimosAPI.createFolder(aes.encrypt(folderName),
-                    aes.encrypt(folderPath), aes.encrypt(HashHelper.getMD5String(folderName, SALT)),
-                    aes.encrypt(SharedPreferencesHelper.getToken()), SharedPreferencesHelper.getGlobalPublicKey());
-            request.enqueue(new Callback<FolderCreateResponse>() {
+        Call<FolderCreateResponse> request = aimosAPI.createFolder(aes.encrypt(folderName),
+                aes.encrypt(folderPath), aes.encrypt(HashHelper.getMD5String(folderName, SALT)),
+                aes.encrypt(SharedPreferencesHelper.getToken()), SharedPreferencesHelper.getGlobalPublicKey());
+        request.enqueue(new Callback<FolderCreateResponse>() {
+            @Override
+            public void onResponse(Call<FolderCreateResponse> call, Response<FolderCreateResponse> response) {
+                if (response.body() != null) {
+                    if (response.body().check(aes)) {
+                        FileData fd = response.body().getFileData();
+                        File folder = new File(getUserRootDirectory() +
+                                folderPath + File.separator +
+                                fd.getName(aes));
+                        if (!folder.exists()) {
+                            folder.mkdirs();
+                        }
+                    } else {
+                        Log.d(TAG, response.body().getErrorType(aes));
+                        if (response.body().getErrorType().equals(SyncResponse.ErrorType.BAD_PUBLIC_KEY.name())) {
+                            fileUploadWaitForKeyExchange = true;
+                            keyExchange.updateKeys();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<FolderCreateResponse> call, Throwable t) {
+                t.printStackTrace();
+            }
+        });
+    }
+
+    public void singleUpload(Long rootDir, File uploadFile) {
+        final AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
+        AimosAPI aimosAPI = AimosAPIClient.getClient().create(AimosAPI.class);
+
+        AESCrypto aesFileCrypto = new AESCrypto();
+        if (uploadFile != null) {
+            tryEncrypt(aes, aesFileCrypto, uploadFile);
+
+            RequestBody requestFile = RequestBody.create(MediaType.parse("multipart/form-data"), getFileString(lastCacheFile));
+
+            Call<FileUploadResponse> request = aimosAPI.singleUpload(requestFile, aes.encrypt(uploadFile.getName()),
+                    aes.encrypt(String.valueOf(uploadFile.length())), aes.encrypt(HashHelper.getFileMD5Hash(uploadFile)),
+                    aes.encrypt(String.valueOf(rootDir)), aes.encrypt(aesFileCrypto.getKeyString()),
+                    aes.encrypt(SharedPreferencesHelper.getToken()),
+                    SharedPreferencesHelper.getGlobalPublicKey());
+            if (onStorageAPIListener != null) {
+                onStorageAPIListener.onFileUploadStart(uploadFile.getName());
+            }
+            request.enqueue(new Callback<FileUploadResponse>() {
                 @Override
-                public void onResponse(Call<FolderCreateResponse> call, Response<FolderCreateResponse> response) {
+                public void onResponse(Call<FileUploadResponse> call, Response<FileUploadResponse> response) {
                     if (response.body() != null) {
                         if (response.body().check(aes)) {
-
+                            if (onStorageAPIListener != null) {
+                                if (onStorageAPIListener != null) {
+                                    onStorageAPIListener.onSingleFileUploadComplete(response.body().getFileData());
+                                }
+                            }
                         } else {
-                            Log.d(TAG, response.body().getErrorType(aes));
+                            if (response.body().getErrorType(aes) != null) {
+                                Log.d(TAG, response.body().getErrorType(aes));
+                            }
                             if (response.body().getErrorType().equals(SyncResponse.ErrorType.BAD_PUBLIC_KEY.name())) {
-                                fileUploadWaitForKeyExchange = true;
+                                syncDownloadForKeyExchange = true;
                                 keyExchange.updateKeys();
                             }
                         }
@@ -366,68 +465,58 @@ public class StorageAPI implements KeyExchangeAPI.KeyExchangeListener {
                 }
 
                 @Override
-                public void onFailure(Call<FolderCreateResponse> call, Throwable t) {
+                public void onFailure(Call<FileUploadResponse> call, Throwable t) {
                     t.printStackTrace();
+                    if (onStorageAPIListener != null) {
+                        if (lastSyncFileData.size() > 0) {
+                            onStorageAPIListener.onFileUploadEnd(lastSyncFileData.get(0).getName(aes), true);
+                        }
+                    }
                 }
             });
         }
     }
 
-    public void singleUpload(File uploadFile) {
-        final AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
+    public void singleUploadTest(File uploadFile) {
         AimosAPI aimosAPI = AimosAPIClient.getClient().create(AimosAPI.class);
 
-        if (lastSyncFileData.size() > 0) {
-            AESCrypto aesFileCrypto = new AESCrypto();
-            FileData fData = new FileData(uploadFile, 0, HashHelper.getFileMD5Hash(uploadFile), aes);
-            if (uploadFile != null) {
-                tryEncrypt(aes, aesFileCrypto, fData, uploadFile);
-                Uri fileUri = Uri.fromFile(lastCacheFile);
-                RequestBody requestFile = RequestBody.create(
-                        MediaType.parse(context.getContentResolver().getType(fileUri)), lastCacheFile);
-                MultipartBody.Part body =
-                        MultipartBody.Part.createFormData("encryptedFile", fData.getName(aes), requestFile);
-                Call<FileUploadResponse> request = aimosAPI.singleUpload(body, fData,
-                        aes.encrypt(aesFileCrypto.getKeyString()), fData.getPath(),
-                        aes.encrypt(SharedPreferencesHelper.getToken()),
-                        SharedPreferencesHelper.getGlobalPublicKey());
-                if (onStorageAPIListener != null) {
-                    onStorageAPIListener.onFileUploadStart(fData.getName(aes));
-                }
-                request.enqueue(new Callback<FileUploadResponse>() {
-                    @Override
-                    public void onResponse(Call<FileUploadResponse> call, Response<FileUploadResponse> response) {
-                        if (response.body() != null) {
-                            if (response.body().check(aes)) {
-                                if (onStorageAPIListener != null) {
-                                    if (onStorageAPIListener != null) {
-                                        onStorageAPIListener.onSingleFileUploadComplete(fData.getName(aes));
-                                    }
-                                }
-                            } else {
-                                Log.d(TAG, response.body().getErrorType(aes));
-                                if (response.body().getErrorType().equals(SyncResponse.ErrorType.BAD_PUBLIC_KEY.name())) {
-                                    syncDownloadForKeyExchange = true;
-                                    keyExchange.updateKeys();
-                                }
-                            }
-                        }
-                    }
+        String result = getFileString(uploadFile);
 
-                    @Override
-                    public void onFailure(Call<FileUploadResponse> call, Throwable t) {
-                        t.printStackTrace();
-                        if (onStorageAPIListener != null) {
-                            if (lastSyncFileData.size() > 0) {
-                                onStorageAPIListener.onFileUploadEnd(lastSyncFileData.get(0).getName(aes), true);
-                            }
-                        }
-                    }
-                });
-            } else {
-                lastSyncFileData.remove(0);
+        RequestBody requestFile = RequestBody.create(MediaType.parse("application/octet-stream"), result);
+
+        Call<String> request = aimosAPI.fileTest(uploadFile.getName(), requestFile);
+        request.enqueue(new Callback<String>() {
+            @Override
+            public void onResponse(Call<String> call, Response<String> response) {
+                if (response.body() != null) {
+                    Toast.makeText(context, response.body(), Toast.LENGTH_SHORT).show();
+                }
             }
+
+            @Override
+            public void onFailure(Call<String> call, Throwable t) {
+                t.printStackTrace();
+            }
+        });
+    }
+
+    @NonNull
+    private String getFileString(File uploadFile) {
+        StringBuffer sb = new StringBuffer();
+
+        FileInputStream fileOutputStream;
+        try {
+            fileOutputStream = new FileInputStream(uploadFile);
+            int res;
+            byte[] arr = new byte[1024];
+            while ((res = fileOutputStream.read(arr)) >= 0) {
+                sb.append(StringUtils.bytesToHex(Arrays.copyOfRange(arr, 0, res)));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
+        return sb.toString();
     }
 
     public String getFolderHash(List<FileData> result, int treeParent, String currentRootPath, AESCrypto aes) {
@@ -436,15 +525,19 @@ public class StorageAPI implements KeyExchangeAPI.KeyExchangeListener {
 
         StringBuilder currentDirHashString = new StringBuilder(currentRootPath.substring(currentRootPath.lastIndexOf(File.separator)));
 
-        for (File f : childList) {
-            if (f.isDirectory()) {
-                String dirHash = getFolderHash(result, result.size(), currentRootPath + File.separator + f.getName(), aes);
-                result.add(new FileData(f, treeParent, dirHash, aes));
-                currentDirHashString.append(dirHash);
-            } else {
-                String fileHash = HashHelper.getFileMD5Hash(f);
-                result.add(new FileData(f, treeParent, fileHash, aes));
-                currentDirHashString.append(fileHash);
+        if (childList != null) {
+            for (File f : childList) {
+                if (f.isDirectory()) {
+                    int cRootPosition = result.size();
+                    result.add(new FileData(f, treeParent, aes));
+                    String dirHash = getFolderHash(result, cRootPosition, currentRootPath + File.separator + f.getName(), aes);
+                    result.get(cRootPosition).setHash(dirHash, aes);
+                    currentDirHashString.append(dirHash);
+                } else {
+                    String fileHash = HashHelper.getFileMD5Hash(f);
+                    result.add(new FileData(f, treeParent, fileHash, aes));
+                    currentDirHashString.append(fileHash);
+                }
             }
         }
 
@@ -455,9 +548,30 @@ public class StorageAPI implements KeyExchangeAPI.KeyExchangeListener {
         return Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator;
     }
 
-    public String getUserRootDirectory() {
+    public static String getUserRootDirectory() {
         return Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator +
-                SharedPreferencesHelper.getName() + File.separator;
+                SharedPreferencesHelper.getLogin() + File.separator;
+    }
+
+    public static String getPath(List<FileData> fileList, int treeParent, AESCrypto aes) {
+        String result = "";
+        FileData tmp = fileList.get(treeParent);
+        while (tmp.getTreeParent(aes) != 0) {
+            result = tmp.getName(aes) + "/" + result;
+            tmp = fileList.get(tmp.getTreeParent(aes));
+        }
+        return result;
+    }
+
+    public static FileData getByParent(List<FileData> fileList, Long parentId, AESCrypto aes) {
+        if (fileList != null) {
+            for (FileData fd : fileList) {
+                if (fd.getId(aes).equals(parentId)) {
+                    return fd;
+                }
+            }
+        }
+        return null;
     }
 
     public void setOnStorageAPIListener(OnStorageAPIListener onStorageAPIListener) {
@@ -499,7 +613,7 @@ public class StorageAPI implements KeyExchangeAPI.KeyExchangeListener {
 
         void onFileDownloadEnd(String fileName, boolean fail);
 
-        void onSingleFileUploadComplete(String name);
+        void onSingleFileUploadComplete(FileData fd);
 
         void onSingleFileUploadFailure();
 

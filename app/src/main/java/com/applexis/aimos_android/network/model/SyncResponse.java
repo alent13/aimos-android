@@ -14,6 +14,9 @@ public class SyncResponse extends ResponseBase {
 
     private List<FileData> fileDataList;
 
+    public SyncResponse() {
+    }
+
     public SyncResponse(List<FileData> fileDataList, AESCrypto aes) {
         this.fileDataList = fileDataList;
         success = aes.encrypt(String.valueOf(true));

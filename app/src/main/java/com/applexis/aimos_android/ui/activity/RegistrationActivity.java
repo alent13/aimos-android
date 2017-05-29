@@ -92,54 +92,57 @@ public class RegistrationActivity extends AppCompatActivity implements KeyExchan
         String desKeyString = SharedPreferencesHelper.getGlobalAesKey();
         String rsaPublic = SharedPreferencesHelper.getGlobalPublicKey();
 
-        if (login != "" && password != "" && name != "" && surname != "" && desKeyString != "") {
-            AESCrypto aes = new AESCrypto(desKeyString);
-            String eLogin = aes.encrypt(login);
-            String eName = aes.encrypt(name);
-            String eSurname = aes.encrypt(surname);
-            String ePassword = aes.encrypt(password);
-            String eEmail = aes.encrypt(email);
-            String ePhone = aes.encrypt(phone);
-            String eAbout = aes.encrypt(about);
+        if (!login.equals("") && !password.equals("") && !name.equals("") && !surname.equals("")) {
+            if (!desKeyString.equals("")) {
+                AESCrypto aes = new AESCrypto(desKeyString);
+                String eLogin = aes.encrypt(login);
+                String eName = aes.encrypt(name);
+                String eSurname = aes.encrypt(surname);
+                String ePassword = aes.encrypt(password);
+                String eEmail = aes.encrypt(email);
+                String ePhone = aes.encrypt(phone);
+                String eAbout = aes.encrypt(about);
 
-            Call<LoginResponse> registrateRequest = aimosAPI.registration(
-                    eLogin, ePassword, eName,
-                    eSurname, eEmail, ePhone,
-                    eAbout, rsaPublic
-            );
-            registrateRequest.enqueue(new Callback<LoginResponse>() {
-                @Override
-                public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
-                    AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
-                    if (response.body() != null && response.body().check(aes)) {
-                        SharedPreferencesHelper.setLogin(response.body().getUserMinimalInfo().getLogin(aes));
-                        SharedPreferencesHelper.setName(response.body().getUserMinimalInfo().getName(aes));
-                        SharedPreferencesHelper.setSurname(response.body().getUserMinimalInfo().getSurname(aes));
-                        SharedPreferencesHelper.setToken(response.body().getToken(aes));
-                        requestMultiplePermissions();
-                        startActivity(new Intent(RegistrationActivity.this, MainActivity.class));
-                        finish();
-                    } else {
-                        Toast.makeText(RegistrationActivity.this, "Ошибка регистрации", Toast.LENGTH_SHORT).show();
-                        if (response.body() != null) {
-                            if (response.body().getErrorType().equals(LoginResponse.ErrorType.BAD_PUBLIC_KEY.name())) {
-                                registrationWaitForKeyExchange = true;
-                                keyExchange.updateKeys();
+                Call<LoginResponse> registrateRequest = aimosAPI.registration(
+                        eLogin, ePassword, eName,
+                        eSurname, eEmail, ePhone,
+                        eAbout, rsaPublic
+                );
+                registrateRequest.enqueue(new Callback<LoginResponse>() {
+                    @Override
+                    public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
+                        AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
+                        if (response.body() != null && response.body().check(aes)) {
+                            SharedPreferencesHelper.setLogin(response.body().getUserMinimalInfo().getLogin(aes));
+                            SharedPreferencesHelper.setName(response.body().getUserMinimalInfo().getName(aes));
+                            SharedPreferencesHelper.setSurname(response.body().getUserMinimalInfo().getSurname(aes));
+                            SharedPreferencesHelper.setToken(response.body().getToken(aes));
+                            requestMultiplePermissions();
+                            startActivity(new Intent(RegistrationActivity.this, MainActivity.class));
+                            finish();
+                        } else {
+                            Toast.makeText(RegistrationActivity.this, "Ошибка регистрации", Toast.LENGTH_SHORT).show();
+                            if (response.body() != null) {
+                                if (response.body().getErrorType().equals(LoginResponse.ErrorType.BAD_PUBLIC_KEY.name())) {
+                                    registrationWaitForKeyExchange = true;
+                                    keyExchange.updateKeys();
+                                }
+                                Toast.makeText(RegistrationActivity.this, "Ошибка регистрации: " + response.body().getErrorType(aes), Toast.LENGTH_SHORT).show();
                             }
-                            Toast.makeText(RegistrationActivity.this, "Ошибка регистрации: " + response.body().getErrorType(aes), Toast.LENGTH_SHORT).show();
                         }
                     }
-                }
 
-                @Override
-                public void onFailure(Call<LoginResponse> call, Throwable t) {
-                    Toast.makeText(RegistrationActivity.this, String.format("Ошибка регистрации (%s)", t.getMessage()), Toast.LENGTH_SHORT).show();
-                }
-            });
-
-        } else if (desKeyString.equals("")) {
-            registrationWaitForKeyExchange = true;
-            keyExchange.updateKeys();
+                    @Override
+                    public void onFailure(Call<LoginResponse> call, Throwable t) {
+                        Toast.makeText(RegistrationActivity.this, String.format("Ошибка регистрации (%s)", t.getMessage()), Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } else {
+                registrationWaitForKeyExchange = true;
+                keyExchange.updateKeys();
+            }
+        } else {
+            Toast.makeText(RegistrationActivity.this, "Введены не все обязательные данные!", Toast.LENGTH_SHORT).show();
         }
     }
 

@@ -9,37 +9,40 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
 import com.applexis.aimos_android.R;
 import com.applexis.aimos_android.network.model.FileData;
 import com.applexis.aimos_android.utils.SharedPreferencesHelper;
 import com.applexis.utils.crypto.AESCrypto;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Stack;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
 /**
- * Created by applexis on 4/21/2017.
+ * @author applexis
  * 0 - FILE
  * 1 - FOLDER
  */
 public class StorageAdapter extends RecyclerView.Adapter<StorageAdapter.ViewHolder> {
 
     private List<FileData> mData;
-    private List<Integer> selectedItems;
+    private List<FileData> displayData;
     private Context context;
+    private boolean folderFirst;
+    private Stack<Long> lastParentId;
+    private Long cParentId = 0L;
     private String[] monthList;
 
     private SortType sortBy = SortType.NAME;
 
-    private OnItemSelect onItemSelect;
+    private OnItemClick onItemClick;
 
     enum SortType {
         NAME,
@@ -47,34 +50,8 @@ public class StorageAdapter extends RecyclerView.Adapter<StorageAdapter.ViewHold
         SIZE
     }
 
-    View.OnClickListener onSelectedItemClick = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            selectedItems.remove(v.getTag());
-            if (onItemSelect != null) {
-                onItemSelect.itemUnselected(selectedItems.size());
-            }
-            v.setOnLongClickListener(onLongClickListener);
-            v.setOnClickListener(null);
-        }
-    };
-
-    View.OnLongClickListener onLongClickListener = new View.OnLongClickListener() {
-        @Override
-        public boolean onLongClick(View v) {
-            final int selectedIndex = (Integer) v.getTag();
-            selectedItems.add(selectedIndex);
-            if (onItemSelect != null) {
-                onItemSelect.itemSelected(selectedIndex, selectedItems.size());
-            }
-            v.setOnLongClickListener(null);
-            v.setOnClickListener(onSelectedItemClick);
-            return true;
-        }
-    };
-
-    public StorageAdapter(Context context, List<FileData> mData) {
-        this.mData = mData;
+    public StorageAdapter(Context context, List<FileData> displayData) {
+        this.displayData = displayData;
         monthList = new String[]{
                 context.getString(R.string.january),
                 context.getString(R.string.february),
@@ -89,6 +66,15 @@ public class StorageAdapter extends RecyclerView.Adapter<StorageAdapter.ViewHold
                 context.getString(R.string.november),
                 context.getString(R.string.december)
         };
+        lastParentId = new Stack<>();
+    }
+
+
+
+    @Override
+    public int getItemViewType(int position) {
+        AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
+        return displayData.get(position).getIsFolder(aes) ? 1 : 0;
     }
 
     @Override
@@ -109,12 +95,12 @@ public class StorageAdapter extends RecyclerView.Adapter<StorageAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(StorageAdapter.ViewHolder holder, int position) {
-        FileData data = mData.get(position);
+        FileData data = displayData.get(position);
 
         AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
 
-        holder.nameText.setText(data.getName());
-        holder.publicImage.setVisibility(data.isPublic(aes) ? View.VISIBLE : View.INVISIBLE);
+        holder.nameText.setText(data.getName(aes));
+        holder.publicImage.setVisibility(data.getIsPublic(aes) ? View.VISIBLE : View.INVISIBLE);
         switch (data.getStatus()) {
             case FileData.OK:
                 holder.statusImage.setImageResource(R.drawable.ic_status_ok);
@@ -130,22 +116,21 @@ public class StorageAdapter extends RecyclerView.Adapter<StorageAdapter.ViewHold
                 break;
 
         }
-        Calendar c = Calendar.getInstance();
-        c.setTime(new Date(data.getCreateDatetime()));
+        holder.infoText.setText("");
 
-        int hour = c.get(Calendar.HOUR_OF_DAY);
-        String hourString = String.format(Locale.ENGLISH, hour >= 10 ? "%d" : "0%d", hour);
-        int minute = c.get(Calendar.MINUTE);
-        String minuteString = String.format(Locale.ENGLISH, minute >= 10 ? "%d" : "0%d", minute);
-        int second = c.get(Calendar.SECOND);
-        String secondString = String.format(Locale.ENGLISH, second >= 10 ? "%d" : "0%d", second);
+        if (!data.getIsFolder(aes)) {
+            Calendar c = Calendar.getInstance();
+            c.setTime(data.getLastModificationDatetime(aes));
 
-        if (data.isFolder(aes)) {
-            holder.infoText.setText(String.format(Locale.ENGLISH, "%d %s %d %s:%s:%s",
-                    c.get(Calendar.DATE), monthList[c.get(Calendar.MONTH)].substring(0, 2),
-                    c.get(Calendar.YEAR), hourString, minuteString, secondString));
-        } else {
+            int hour = c.get(Calendar.HOUR_OF_DAY);
+            String hourString = String.format(Locale.ENGLISH, hour >= 10 ? "%d" : "0%d", hour);
+            int minute = c.get(Calendar.MINUTE);
+            String minuteString = String.format(Locale.ENGLISH, minute >= 10 ? "%d" : "0%d", minute);
+            int second = c.get(Calendar.SECOND);
+            String secondString = String.format(Locale.ENGLISH, second >= 10 ? "%d" : "0%d", second);
+
             Double byteSize = data.getSize(aes).doubleValue();
+
             String size = byteSize < 1024 ? String.valueOf(byteSize) + " B" :
                     byteSize < 1024 * 1024 ? String.valueOf(byteSize / 1024) + "KB" :
                             byteSize < 1024 * 1024 * 1024 ? String.valueOf(byteSize / 1024 * 1024) + "MB" :
@@ -155,50 +140,105 @@ public class StorageAdapter extends RecyclerView.Adapter<StorageAdapter.ViewHold
                     c.get(Calendar.YEAR), hourString, minuteString, secondString, size));
         }
         holder.itemView.setTag(position);
-        if (selectedItems.contains(position)) {
-            holder.itemView.setBackgroundColor(context.getResources().getColor(R.color.colorPrimaryLight));
-            holder.itemView.setOnLongClickListener(null);
-            holder.itemView.setOnClickListener(onSelectedItemClick);
-        } else {
-            holder.itemView.setBackgroundColor(context.getResources().getColor(R.color.white));
-            holder.itemView.setOnLongClickListener(onLongClickListener);
-            holder.itemView.setOnClickListener(null);
-        }
-
+        holder.itemView.setOnClickListener(v -> {
+            FileData clicked = displayData.get((int) v.getTag());
+            if (clicked.getIsFolder(aes)) {
+                lastParentId.push(cParentId);
+                cParentId = clicked.getId(aes);
+                displayData = Stream.of(mData)
+                        .filter(fd -> fd.getParentId(aes).equals(cParentId))
+                        .collect(Collectors.toList());
+                notifyDataSetChanged();
+                notifyItemRangeInserted(0, displayData.size());
+            } else {
+                if (onItemClick != null) {
+                    onItemClick.onFileClick(clicked);
+                }
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
-        return mData.size();
+        return displayData.size();
     }
 
-    public void updateData(List<FileData> data, final AESCrypto aes) {
+    public void updateData(List<FileData> data) {
+        final AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
         mData = data;
-        Collections.sort(mData, new Comparator<FileData>() {
-            @Override
-            public int compare(FileData o1, FileData o2) {
-                if (o1.isFolder(aes) && !o2.isFolder(aes)) {
-                    return -1;
-                } else if (!o1.isFolder(aes) && o2.isFolder(aes)) {
-                    return 1;
-                } else if (o1.isFolder(aes) && o2.isFolder(aes)) {
-                    return o1.getName(aes).compareTo(o2.getName(aes));
-                } else {
-                    switch (sortBy) {
-                        case NAME:
-                            return o1.getName(aes).compareTo(o2.getName(aes));
-                        case SIZE:
-                            return o1.getSize(aes).compareTo(o2.getSize(aes));
-                        case DATE:
-                            return o1.getCreateDatetime(aes).compareTo(o2.getCreateDatetime(aes));
-                    }
-                }
-                return 0;
-            }
-        });
-        selectedItems = new ArrayList<>();
+        displayData = Stream.of(mData)
+                .filter(fd -> fd.getParentId(aes).equals(cParentId))
+                .collect(Collectors.toList());
+        if (folderFirst) {
+            sortFolderFirst(aes);
+        } else {
+            sortSimple(aes);
+        }
         notifyDataSetChanged();
         notifyItemRangeInserted(0, data.size());
+    }
+
+    private void sortFolderFirst(final AESCrypto aes) {
+        Collections.sort(displayData, (o1, o2) -> {
+            if (o1.getIsFolder(aes) && !o2.getIsFolder(aes)) {
+                return -1;
+            } else if (!o1.getIsFolder(aes) && o2.getIsFolder(aes)) {
+                return 1;
+            } else if (o1.getIsFolder(aes) && o2.getIsFolder(aes)) {
+                return o1.getName(aes).compareTo(o2.getName(aes));
+            } else {
+                switch (sortBy) {
+                    case NAME:
+                        return o1.getName(aes).compareTo(o2.getName(aes));
+                    case SIZE:
+                        return o1.getSize(aes).compareTo(o2.getSize(aes));
+                    case DATE:
+                        return o1.getCreateDatetime(aes).compareTo(o2.getCreateDatetime(aes));
+                }
+            }
+            return 0;
+        });
+    }
+
+    public void pageUp() {
+        AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
+        cParentId = lastParentId.empty() ? 0L : lastParentId.pop();
+        displayData = Stream.of(mData)
+                .filter(fd -> fd.getParentId(aes).equals(cParentId))
+                .collect(Collectors.toList());
+        if (folderFirst) {
+            sortFolderFirst(aes);
+        } else {
+            sortSimple(aes);
+        }
+        notifyDataSetChanged();
+        notifyItemRangeInserted(0, displayData.size());
+    }
+
+    public void setFolderFirst(boolean folderFirst) {
+        this.folderFirst = folderFirst;
+        AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
+        if (folderFirst) {
+            sortFolderFirst(aes);
+        } else {
+            sortSimple(aes);
+        }
+        notifyDataSetChanged();
+        notifyItemRangeInserted(0, displayData.size());
+    }
+
+    private void sortSimple(final AESCrypto aes) {
+        Collections.sort(displayData, (o1, o2) -> {
+            switch (sortBy) {
+                case NAME:
+                    return o1.getName(aes).compareTo(o2.getName(aes));
+                case SIZE:
+                    return o1.getSize(aes).compareTo(o2.getSize(aes));
+                case DATE:
+                    return o1.getCreateDatetime(aes).compareTo(o2.getCreateDatetime(aes));
+            }
+            return 0;
+        });
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
@@ -217,6 +257,37 @@ public class StorageAdapter extends RecyclerView.Adapter<StorageAdapter.ViewHold
         }
     }
 
+    public Long getCurrentParentId() {
+        return cParentId;
+    }
+
+    public boolean containsFile(String name, AESCrypto aes) {
+        for (FileData fileData : displayData) {
+            if (fileData.getName(aes).equals(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void addToList(FileData fileData) {
+        AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
+        mData.add(fileData);
+        displayData = Stream.of(mData)
+                .filter(fd -> fd.getParentId(aes).equals(cParentId))
+                .collect(Collectors.toList());
+        if (folderFirst) {
+            sortFolderFirst(aes);
+        } else {
+            sortSimple(aes);
+        }
+        notifyDataSetChanged();
+    }
+
+    public void setOnItemClick(OnItemClick onItemClick) {
+        this.onItemClick = onItemClick;
+    }
+
     public SortType getSortBy() {
         return sortBy;
     }
@@ -225,13 +296,11 @@ public class StorageAdapter extends RecyclerView.Adapter<StorageAdapter.ViewHold
         this.sortBy = sortBy;
     }
 
-    public void setOnItemSelect(OnItemSelect onItemSelect) {
-        this.onItemSelect = onItemSelect;
-    }
+    public interface OnItemClick {
+        void onFolderLongClick(FileData fileData);
 
-    interface OnItemSelect {
-        public void itemSelected(int position, int selectedCount);
+        void onFileLongClick(FileData fileData);
 
-        public void itemUnselected(int selectedCount);
+        void onFileClick(FileData fileData);
     }
 }

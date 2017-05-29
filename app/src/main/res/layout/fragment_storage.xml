@@ -28,9 +28,10 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:background="@color/colorPrimary"
-        android:visibility="visible">
+        android:visibility="gone">
 
         <TextView
+            android:id="@+id/fragment_storage_sync_status_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="18sp"

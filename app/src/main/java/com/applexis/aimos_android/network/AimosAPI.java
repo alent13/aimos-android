@@ -13,10 +13,12 @@ import com.applexis.aimos_android.network.model.LoginResponse;
 import com.applexis.aimos_android.network.model.MessageSendResponse;
 import com.applexis.aimos_android.network.model.SyncResponse;
 
-import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
+import retrofit2.http.Multipart;
 import retrofit2.http.POST;
+import retrofit2.http.Part;
 import retrofit2.http.Query;
 
 /**
@@ -101,12 +103,13 @@ public interface AimosAPI {
                                           @Query("base64PublicKey") String base64PublicKey);
 
     @POST("/mobile-api/sync")
-    Call<SyncResponse> storageSync(@Query("fileData") FileData[] fileData,
+    Call<SyncResponse> storageSync(@Query("fileDataList") String fileDataList,
                                    @Query("eToken") String eToken,
                                    @Query("base64PublicKey") String base64PublicKey);
 
+    @Multipart
     @POST("/mobile-api/syncUpload")
-    Call<FileUploadResponse> syncUpload(@Query("file") MultipartBody.Part file,
+    Call<FileUploadResponse> syncUpload(@Part("file\"; filename=\"pp.rr\" ") RequestBody file,
                                         @Query("eFileData") FileData eFileData,
                                         @Query("eFilePath") String eFilePath,
                                         @Query("eKey") String eKey,
@@ -131,12 +134,19 @@ public interface AimosAPI {
                                             @Query("eToken") String eToken,
                                             @Query("base64PublicKey") String base64PublicKey);
 
+    @Multipart
     @POST("/mobile-api/singleUpload")
-    Call<FileUploadResponse> singleUpload(@Query("file") MultipartBody.Part file,
-                                          @Query("eFileData") FileData eFileData,
+    Call<FileUploadResponse> singleUpload(@Part("file") RequestBody file,
+                                          @Query("eName") String eName,
+                                          @Query("eSize") String eSize,
+                                          @Query("eHash") String eHash,
+                                          @Query("eParentDir") String eParentDir,
                                           @Query("eKey") String eKey,
-                                          @Query("eFilePath") String eFilePath,
                                           @Query("eToken") String eToken,
                                           @Query("base64PublicKey") String base64PublicKey);
+
+    @Multipart
+    @POST("/mobile-api/fileTest")
+    Call<String> fileTest(@Part("name") String name, @Part("file") RequestBody file);
 
 }

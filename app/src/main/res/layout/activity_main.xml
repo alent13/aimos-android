@@ -30,6 +30,6 @@
         app:ntb_tinted="true"
         app:ntb_titled="true"
         app:ntb_title_mode="active"
-        app:ntb_title_size="9sp"/>
+        app:ntb_title_size="10sp"/>
 
 </LinearLayout>

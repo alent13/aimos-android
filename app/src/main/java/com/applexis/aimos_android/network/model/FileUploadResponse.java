@@ -4,15 +4,24 @@ import com.applexis.utils.crypto.AESCrypto;
 
 public class FileUploadResponse extends ResponseBase {
 
+    public enum ErrorType {
+        DATABASE_ERROR,
+        BAD_PUBLIC_KEY,
+        INCORRECT_TOKEN,
+        INCORRECT_FILE_DATA
+    }
+
     private FileData fileData;
+
+    public FileUploadResponse() {
+    }
 
     public FileUploadResponse(AESCrypto aes) {
         super(aes);
     }
 
-    public FileUploadResponse(String errorType, AESCrypto aes, FileData fileData) {
+    public FileUploadResponse(String errorType, AESCrypto aes) {
         super(errorType, aes);
-        this.fileData = fileData;
     }
 
     public FileUploadResponse(FileData fileData, AESCrypto aes) {

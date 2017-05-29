@@ -10,6 +10,11 @@ public class FolderCreateResponse extends ResponseBase {
         INCORRECT_TOKEN
     }
 
+    private FileData fileData;
+
+    public FolderCreateResponse() {
+    }
+
     public FolderCreateResponse(AESCrypto aes, boolean success) {
         this.success = aes.encrypt(String.valueOf(success));
     }
@@ -20,5 +25,13 @@ public class FolderCreateResponse extends ResponseBase {
 
     public FolderCreateResponse(String errorType, AESCrypto aes) {
         super(errorType, aes);
+    }
+
+    public FileData getFileData() {
+        return fileData;
+    }
+
+    public void setFileData(FileData fileData) {
+        this.fileData = fileData;
     }
 }

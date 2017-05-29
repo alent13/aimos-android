@@ -21,8 +21,9 @@ public class AimosAPIClient {
                     .baseUrl(BASE_URL)
                     .addConverterFactory(JacksonConverterFactory.create())
                     .client(new OkHttpClient.Builder()
-                            .readTimeout(30, TimeUnit.SECONDS)
-                            .connectTimeout(30, TimeUnit.SECONDS)
+                            .readTimeout(60, TimeUnit.SECONDS)
+                            .writeTimeout(60, TimeUnit.SECONDS)
+                            .connectTimeout(10, TimeUnit.SECONDS)
                             .build())
                     .build();
         }

@@ -170,14 +170,18 @@ public class AuthenticationActivity extends AppCompatActivity implements KeyExch
             public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
                 AESCrypto aes = new AESCrypto(SharedPreferencesHelper.getGlobalAesKey());
                 if (response.body() != null && response.body().check(aes)) {
-                    SharedPreferencesHelper.setId(response.body().getUserMinimalInfo().getId(aes));
-                    SharedPreferencesHelper.setLogin(response.body().getUserMinimalInfo().getLogin(aes));
-                    SharedPreferencesHelper.setName(response.body().getUserMinimalInfo().getName(aes));
-                    SharedPreferencesHelper.setSurname(response.body().getUserMinimalInfo().getSurname(aes));
-                    SharedPreferencesHelper.setToken(response.body().getToken(aes));
-                    requestMultiplePermissions();
-                    startActivity(new Intent(AuthenticationActivity.this, MainActivity.class));
-                    finish();
+                    if (response.body().getUserMinimalInfo() != null) {
+                        SharedPreferencesHelper.setId(response.body().getUserMinimalInfo().getId(aes));
+                        SharedPreferencesHelper.setLogin(response.body().getUserMinimalInfo().getLogin(aes));
+                        SharedPreferencesHelper.setName(response.body().getUserMinimalInfo().getName(aes));
+                        SharedPreferencesHelper.setSurname(response.body().getUserMinimalInfo().getSurname(aes));
+                        SharedPreferencesHelper.setToken(response.body().getToken(aes));
+                        requestMultiplePermissions();
+                        startActivity(new Intent(AuthenticationActivity.this, MainActivity.class));
+                        finish();
+                    } else {
+                        Toast.makeText(AuthenticationActivity.this, "Login Error: " + response.body().getErrorType(aes), Toast.LENGTH_LONG).show();
+                    }
                 } else {
                     if (response.body() != null) {
                         Toast.makeText(AuthenticationActivity.this, "Login Error: " + response.body().getErrorType(aes), Toast.LENGTH_LONG).show();
